@@ -1,8 +1,27 @@
-
+#ifndef _DEV_MPU_H_
+#define _DEV_MPU_H_
 /*
  * MPU6050 device description
  * Include this in your .c file
  */
+#include <stdlib.h>	   /* for malloc(), free(), exit() */
+#include <stdio.h>	   /* for printf(), scanf(), fopen(), perror() */
+#include <string.h>	   /* for memcpy() */
+#include <unistd.h>	   /* for close(), write(), getopt(), size_t */
+#include <inttypes.h>	   /* for uint8_t, uint16_t, etc */
+#include <stdint.h>	   /* for uint8_t, uint16_t, etc */
+#include <stddef.h>	   /* for size_t */
+#include <stdbool.h>	   /* for bool */
+#include <fcntl.h>	   /* for open() */
+#include <sys/stat.h>	   /* for open() */
+#include <sys/types.h>	   /* for open() */
+#include <sys/ioctl.h>	   /* for ioctl() */
+#include <linux/types.h>   /* for __u8, __s32 */
+#include <i2c/smbus.h> 	   /* for i2c_smbus_x */
+#include <linux/i2c.h> 	   /* for i2c_smbus_x */
+#include <linux/i2c-dev.h> /* for i2c_smbus_x */
+#include <stdio.h>
+#include <math.h>
 
 /*
  * Orientation of Sensor Axis
@@ -296,150 +315,6 @@
 #define I2C_MST_CLK_14		(uint8_t)(0x0Eu) /* I2C_MST_CTRL */
 #define I2C_MST_CLK_15		(uint8_t)(0x0Fu) /* I2C_MST_CTRL */
 
-uint8_t mpu_regvalues[128];
-
-char mpu_regnames[ 128 ][ 32 ] = {
-[ AUX_VDDIO ]		= "AUX_VDDIO",
-[ XA_OFFS_USRH ] 	= "XA_OFFS_USRH",
-[ XA_OFFS_USRL ] 	= "XA_OFFS_USRL",
-[ YA_OFFS_USRH ] 	= "YA_OFFS_USRH",
-[ YA_OFFS_USRL ] 	= "YA_OFFS_USRL",
-[ ZA_OFFS_USRH ] 	= "ZA_OFFS_USRH",
-[ ZA_OFFS_USRL ] 	= "ZA_OFFS_USRL",
-[ XG_OFFS_USRH ] 	= "XG_OFFS_USRH",
-[ XG_OFFS_USRL ] 	= "XG_OFFS_USRL",
-[ YG_OFFS_USRH ] 	= "YG_OFFS_USRH",
-[ YG_OFFS_USRL ] 	= "YG_OFFS_USRL",
-[ ZG_OFFS_USRH ] 	= "ZG_OFFS_USRH",
-[ ZG_OFFS_USRL ]	= "ZG_OFFS_USRL",
-[ PROD_ID ] 		= "PROD_ID",
-[ SELF_TEST_X ] 	= "SELF_TEST_X",
-[ SELF_TEST_Y ]		= "SELF_TEST_Y",
-[ SELF_TEST_Z ]		= "SELF_TEST_Z",
-[ SELF_TEST_A ]		= "SELF_TEST_A",
-[ SMPLRT_DIV ]		= "SMPLRT_DIV",
-[ CONFIG ]		= "CONFIG",
-[ GYRO_CONFIG ]		= "GYRO_CONFIF",
-[ ACCEL_CONFIG ]	= "ACCEL_CONFIG",
-[ FF_THR ]		= "FF_THR",
-[ FF_DUR ]		= "FF_DUR",
-[ MOT_THR ]		= "MOT_THR",
-[ MOT_DUR ]		= "MOT_DUR",
-[ ZRMOT_THR ]		= "ZRMOT_THR",
-[ ZRMOT_DUR ]		= "ZRMOT_DUR",
-[ FIFO_EN ]		= "FIFO_EN",
-[ I2C_MST_CTRL ]	= "I2C_MST_CTRL",
-[ I2C_SLV0_ADDR ] 	= "I2C_SLV0_ADDR",
-[ I2C_SLV0_REG ]	= "I2C_SLV0_REG",
-[ I2C_SLV0_CTRL ] 	= "I2C_SLV0_CTRL",
-[ I2C_SLV1_ADDR ]	= "I2C_SLV1_ADDR",
-[ I2C_SLV1_REG ]	= "I2C_SLV1_REG",
-[ I2C_SLV1_CTRL ]	= "I2C_SLV1_CTRL",
-[ I2C_SLV2_ADDR ]	= "I2C_SLV2_ADDR",
-[ I2C_SLV2_REG ]	= "I2C_SLV2_REG",
-[ I2C_SLV2_CTRL ]	= "I2C_SLV2_CTRL",
-[ I2C_SLV3_ADDR ]	= "I2C_SLV3_ADDR",
-[ I2C_SLV3_REG ]	= "I2C_SLV3_REG",
-[ I2C_SLV3_CTRL ]	= "I2C_SLV3_CTRL",
-[ I2C_SLV4_ADDR ]	= "I2C_SLV4_ADDR",
-[ I2C_SLV4_REG ]	= "I2C_SLV4_REG",
-[ I2C_SLV4_DO ]		= "I2C_SLV4_DO",
-[ I2C_SLV4_CTRL ]	= "I2C_SLV4_CTRL",
-[ I2C_SLV4_DI ]		= "I2C_SLV4_DI",
-[ I2C_MAST_STATUS ]	= "I2C_MST_STATUS",
-[ INT_PIN_CFG ]		= "INT_PIN_CFG",
-[ INT_ENABLE ]		= "INT_ENABLE",
-[ DMP_INT_STATUS ] 	= "DMP_INT_STATUS",
-[ INT_STATUS ]		= "INT_STATUS",
-[ ACCEL_XOUT_H ] 	= "ACCEL_XOUT_H",
-[ ACCEL_XOUT_L ] 	= "ACCEL_XOUT_L",
-[ ACCEL_YOUT_H ] 	= "ACCEL_YOUT_H",
-[ ACCEL_YOUT_L ] 	= "ACCEL_YOUT_L",
-[ ACCEL_ZOUT_H ] 	= "ACCEL_ZOUT_H ",
-[ ACCEL_ZOUT_L ] 	= "ACCEL_ZOUT_L",
-[ TEMP_OUT_H ] 		= "TEMP_OUT_H",
-[ TEMP_OUT_L ] 		= "TEMP_OUT_L",
-[ GYRO_XOUT_H ] 	= "GYRO_XOUT_H",
-[ GYRO_XOUT_L ] 	= "GYRO_XOUT_L",
-[ GYRO_YOUT_H ] 	= "GYRO_YOUT_H",
-[ GYRO_YOUT_L ] 	= "GYRO_YOUT_L",
-[ GYRO_ZOUT_H ] 	= "GYRO_ZOUT_H",
-[ GYRO_ZOUT_L ] 	= "GYRO_ZOUT_L",
-[ EXT_SENS_DATA_00 ]	= "EXT_SENS_DATA_00",
-[ EXT_SENS_DATA_01 ]	= "EXT_SENS_DATA_01",
-[ EXT_SENS_DATA_02 ]	= "EXT_SENS_DATA_02",
-[ EXT_SENS_DATA_03 ]	= "EXT_SENS_DATA_03",
-[ EXT_SENS_DATA_04 ]	= "EXT_SENS_DATA_04",
-[ EXT_SENS_DATA_05 ]	= "EXT_SENS_DATA_05",
-[ EXT_SENS_DATA_06 ]	= "EXT_SENS_DATA_06",
-[ EXT_SENS_DATA_07 ]	= "EXT_SENS_DATA_07",
-[ EXT_SENS_DATA_08 ]	= "EXT_SENS_DATA_08",
-[ EXT_SENS_DATA_09 ]	= "EXT_SENS_DATA_09",
-[ EXT_SENS_DATA_10 ]	= "EXT_SENS_DATA_10",
-[ EXT_SENS_DATA_11 ]	= "EXT_SENS_DATA_11",
-[ EXT_SENS_DATA_12 ]	= "EXT_SENS_DATA_12",
-[ EXT_SENS_DATA_13 ]	= "EXT_SENS_DATA_13",
-[ EXT_SENS_DATA_14 ]	= "EXT_SENS_DATA_14",
-[ EXT_SENS_DATA_15 ]	= "EXT_SENS_DATA_15",
-[ EXT_SENS_DATA_16 ]	= "EXT_SENS_DATA_16",
-[ EXT_SENS_DATA_17 ]	= "EXT_SENS_DATA_17",
-[ EXT_SENS_DATA_18 ]	= "EXT_SENS_DATA_18",
-[ EXT_SENS_DATA_19 ]	= "EXT_SENS_DATA_19",
-[ EXT_SENS_DATA_20 ]	= "EXT_SENS_DATA_20",
-[ EXT_SENS_DATA_21 ]	= "EXT_SENS_DATA_21",
-[ EXT_SENS_DATA_22 ]	= "EXT_SENS_DATA_22",
-[ EXT_SENS_DATA_23 ]	= "EXT_SENS_DATA_23",
-[ MOT_DETECT_STATUS ]	= "MOT_DETECT_STATUS",
-[ I2C_SLV0_DO ]		= "I2C_SLV0_DO",
-[ I2C_SLV1_DO ]		= "I2C_SLV1_DO",
-[ I2C_SLV2_DO ]		= "I2C_SLV2_DO",
-[ I2C_SLV3_DO ]		= "I2C_SLV0_DO",
-[ I2C_MST_DELAY_CTRL ]	= "I2C_MST_DELAY_CTRL",
-[ SIGNAL_PATH_RESET ]	= "SIGNAL_PATH_RESET",
-[ MOT_DETECT_CTRL ]	= "MOT_DETECT_CTRL",
-[ USER_CTRL ]		= "USER_CTRL",
-[ PWR_MGMT_1 ]		= "PWR_MGMT_1",
-[ PWR_MGMT_2 ]		= "PWR_MGMT_2",
-[ MEM_R_W ] 		= "MEM_R_W",
-[ BANK_SEL ] 		= "BANK_SEL",
-[ MEM_START_ADDR ] 	= "MEM_START_ADDR",
-[ PRGM_START_H ] 	= "PRGM_START_H",
-[ PRGM_START_L ] 	= "PRGM_START_L",
-[ FIFO_COUNT_H ]	= "FIFO_COUNT_H",
-[ FIFO_COUNT_L ]	= "FIFO_COUNT_L",
-[ FIFO_R_W ]		= "FIFO_R_W",
-[ WHO_AM_I ]		= "WHO_AM_I",
-};
-
-/*
- * Enable device tree for i2c-1 inside /boot/config.txt
- * 	[all]
- * 	dtparam=i2c_arm=on
- * 	dtparam=i2c_arm_baudrate=400000
- *
- * Supported features
- * 	Accelerometer		- enable/disable, range setting
- * 	Gyroscope 	  	- enable/disable, range setting
- * 	Temperature sensor	- enable/disable
- * 	Sampling rate control 	- 10,20,25,50,100,200 Hz
- * 	Buffered readings	- ensures regular sampling interval
- * 	DLPF (Digital Low Pass filter) - refer to datasheet
- *
- * Unsupported features
- * 	Self-tests		- lazy
- * 	eDMP (embedded Digital Motion Proccessor) - blob, undocumented
- * 	Low-power modes		- not our use case
- * 	External interrupts	- not our use case
- * 	External clock sources	- not our use case
- * 	Secondary i2c bus	- not our use case
- *
- * Return value for all function calls:
- * 	On success, return 0.
- * 	On failure, return -1;
- */
-
-
-
 #ifndef MPU6050_ADDR
 #define MPU6050_ADDR 0x68
 #endif
@@ -461,8 +336,8 @@ struct mpu_dev {
 	bool	aolpm;		/* accelerometer-only low power mode */
 	double	wake_freq;	/* low-power cycling freq */
 	double	clock_freq;	/* determined by CLKSEL */
-	size_t	fifomax;	/* fifo buffer capacity in bytes */
-	size_t	fifocnt;	/* bytes available in fifo */
+	int	fifomax;	/* fifo buffer capacity in bytes */
+	int	fifocnt;	/* bytes available in fifo */
 	unsigned int gor;	/* gyro output rate (Hz) */
 	double str_xa;		/* self-test response */
 	double str_ya;		/* self-test response */
@@ -488,6 +363,8 @@ struct mpu_dev {
 	double gdly;		/* gyroscope delay in miliseconds (ms) */
 	/* readable data */
 	unsigned long long samples;	/* sample counter			*/
+	mpu_data_t	*AM;
+	mpu_data_t	*GM;
 	mpu_data_t	*Ax, *Ax2, *Axo, *Axg, *Axm, *Axv, *Axd;
 	mpu_data_t	*Ay, *Ay2, *Ayo, *Ayg, *Aym, *Ayv, *Ayd;
 	mpu_data_t	*Az, *Az2, *Azo, *Azg, *Azm, *Azv, *Azd;
@@ -503,17 +380,38 @@ struct mpu_cal {
 	mpu_data_t off[32];	/* ax - mean(ax[n]), ...		*/
 	mpu_data_t gai[32];	/* ax[expec_1g]/ax[measured_1g], ...	*/
 	mpu_data_t dri[32];	/* delta(mean(ax[n])/delta(time), ...	*/
+	int16_t xa_orig;
+	int16_t ya_orig;
+	int16_t za_orig;
+	int16_t xg_orig;
+	int16_t yg_orig;
+	int16_t zg_orig;
+	int16_t xa_cust;
+	int16_t ya_cust;
+	int16_t za_cust;
+	int16_t xg_cust;
+	int16_t yg_cust;
+	int16_t zg_cust;
+	int samples;
+	long double xa_bias;
+	long double ya_bias;
+	long double za_bias;
+	long double xg_bias;
+	long double yg_bias;
+	long double zg_bias;
+	long double AM_bias;
+	long double GM_bias;
 };
 
 struct mpu_dat {
-
 	int16_t raw[32];	/* raw sensor data	*/
-
 	mpu_data_t scl[32];	/* scaling factors	*/
 	mpu_data_t dat[32][2];	/* scaled data		*/
 	mpu_data_t squ[32];	/* squared data		*/
 	mpu_data_t mea[32];	/* data mean		*/
 	mpu_data_t var[32];	/* data variance	*/
+	mpu_data_t AM;		/* accel magnitude	*/
+	mpu_data_t GM;		/* gyro rate magnitude	*/
 };
 
 struct mpu_cfg {
@@ -552,33 +450,126 @@ struct mpu_cfg {
 	bool i2c_mst_int_en;  	/* INT_ENABLE */
 	bool data_rdy_en;  	/* INT_ENABLE */
 };
+#define MPUDEV_IS_NULL(dev) ((dev == NULL) 	|| \
+			     (dev->cfg == NULL) || \
+			     (dev->dat == NULL) || \
+			     (dev->cal == NULL) || \
+			     (dev->addr == NULL))
 
-const struct mpu_cfg mpu6050_defcfg = {
-	.cfg =	{
-		{ PWR_MGMT_1,   0x03},	/* power on, temp enabled, clock gyro_z */
-		{ PWR_MGMT_2,   0x00},	/* no standby, full on			*/
-		{ CONFIG,       0x00},	/* dlpf off				*/
-		{ SMPLRT_DIV,   0x4F},	/* divisor = 80(1+79), rate = 100	*/
-		{ ACCEL_CONFIG, 0x00},	/* +-2g 				*/
-		{ GYRO_CONFIG,  0x00},	/* +-250 deg/s 				*/
-		{ USER_CTRL,    0x60},	/* fifo enabled, aux i2c master mode	*/
-		{ FIFO_EN,  	0xF8},	/* temp, accel, gyro buffered		*/
-		{ INT_PIN_CFG,  0x00},	/* interrupts disabled			*/
-		{ INT_ENABLE,   0x00},	/* interrupts disabled			*/
-	}
-};
+#define MPUDEV_NOT_NULL(dev) ((dev != NULL) 	&& \
+			     (dev->cfg != NULL) && \
+			     (dev->dat != NULL) && \
+			     (dev->cal != NULL) && \
+			     (dev->addr != NULL))
 
-const struct mpu_cfg mpu6050_stcfg = {
-	.cfg =	{
-		{ PWR_MGMT_1,   0x00},	/* power on, temp enable, int. clk 	*/
-		{ PWR_MGMT_2,   0x00},	/* no standby, full on			*/
-		{ CONFIG,       0x01},	/* dlpf 1 				*/
-		{ SMPLRT_DIV,   0x00},	/* divisor =0 rate = 1000		*/
-		{ ACCEL_CONFIG, 0x18},	/* +-16g 				*/
-		{ GYRO_CONFIG,  0x00},	/* +-250 deg/s 				*/
-		{ USER_CTRL,    0x00},	/* fifo disabled, i2c master disabled	*/
-		{ FIFO_EN,  	0x00},	/* no sensors				*/
-		{ INT_PIN_CFG,  0x00},	/* interrupts disabled			*/
-		{ INT_ENABLE,   0x00},	/* interrupts disabled			*/
-	}
-};
+/*
+ * Enable device tree for i2c-1 inside /boot/config.txt
+ * 	[all]
+ * 	dtparam=i2c_arm=on
+ * 	dtparam=i2c_arm_baudrate=400000
+ *
+ * Supported features
+ * 	Accelerometer		- enable/disable, range setting
+ * 	Gyroscope 	  	- enable/disable, range setting
+ * 	Temperature sensor	- enable/disable
+ * 	Sampling rate control 	- 10,20,25,50,100,200 Hz
+ * 	Buffered readings	- ensures regular sampling interval
+ * 	DLPF (Digital Low Pass filter) - refer to datasheet
+ *
+ * Unsupported features
+ * 	Self-tests		- lazy
+ * 	eDMP (embedded Digital Motion Proccessor) - blob, undocumented
+ * 	Low-power modes		- not our use case
+ * 	External interrupts	- not our use case
+ * 	External clock sources	- not our use case
+ * 	Secondary i2c bus	- not our use case
+ *
+ * Return value for all function calls:
+ * 	On success, return 0.
+ * 	On failure, return -1;
+ */
+int mpu_init(	const char * path,
+		const uint8_t address,
+		struct mpu_dev **mpudev);
+
+int mpu_destroy(struct mpu_dev * mpudev);
+
+
+int mpu_ctl_reset(struct mpu_dev * dev);
+
+int mpu_ctl_calibration(struct mpu_dev * dev);
+int mpu_ctl_calibration_reset(struct mpu_dev * dev);
+
+int mpu_ctl_bias_set  (struct mpu_dev *dev);
+int mpu_ctl_bias_print(struct mpu_dev *dev);
+
+void mpu_print_data  (struct mpu_dev *dev, int times);
+void mpu_print_angle (struct mpu_dev *dev);
+void mpu_print_all   (struct mpu_dev *dev);
+
+int mpu_ctl_selftest		  (struct mpu_dev *dev);
+int mpu_ctl_selftest_enable_accel (struct mpu_dev *dev);
+int mpu_ctl_selftest_enable_gyro  (struct mpu_dev *dev);
+int mpu_ctl_selftest_disable_accel(struct mpu_dev *dev);
+int mpu_ctl_selftest_disable_gyro (struct mpu_dev *dev);
+
+int mpu_ctl_fifo_enable		(struct mpu_dev *dev);
+int mpu_ctl_fifo_enable_accel	(struct mpu_dev *dev);
+int mpu_ctl_fifo_enable_gyro	(struct mpu_dev *dev);
+int mpu_ctl_fifo_enable_temp	(struct mpu_dev *dev);
+int mpu_ctl_fifo_disable	(struct mpu_dev *dev);
+int mpu_ctl_fifo_disable_accel	(struct mpu_dev *dev);
+int mpu_ctl_fifo_disable_gyro	(struct mpu_dev *dev);
+int mpu_ctl_fifo_disable_temp	(struct mpu_dev *dev);
+int mpu_ctl_fifo_count		(struct mpu_dev *dev, int *count);
+int mpu_ctl_fifo_data		(struct mpu_dev *dev);
+int mpu_ctl_fifo_flush		(struct mpu_dev *dev);
+int mpu_ctl_fifo_reset		(struct mpu_dev *dev);
+
+void mpu_ctl_fix_axis(struct mpu_dev *dev);
+
+int mpu_ctl_i2c_mst_reset	(struct mpu_dev *dev);
+int mpu_ctl_sig_cond_reset	(struct mpu_dev *dev);
+
+
+int mpu_ctl_wake(struct mpu_dev *  dev);
+
+int mpu_ctl_samplerate( struct mpu_dev * dev,
+			unsigned int rate_hz);
+
+int mpu_ctl_dlpf(struct mpu_dev * dev,
+	       	 unsigned int dlpf);
+
+int mpu_ctl_accel_range( struct mpu_dev * dev,
+			unsigned int range);
+
+int mpu_ctl_gyro_range( struct mpu_dev * dev,
+			unsigned int range);
+
+int mpu_ctl_temperature(struct mpu_dev * dev,
+			bool temp_on);
+
+int mpu_ctl_clocksource(struct mpu_dev * dev,
+			mpu_reg_t clksel);
+
+int mpu_read_byte(struct mpu_dev * const dev,
+		const mpu_reg_t reg, 		/* device register */
+		mpu_reg_t * val);		/* value destination */
+
+int mpu_read_word(struct mpu_dev * const dev,
+		const mpu_reg_t reg, 		/* device register */
+		mpu_word_t * val);		/* value destination */
+
+int mpu_read_data(struct mpu_dev * const dev,
+		const mpu_reg_t reg, 		/* device register */
+		int16_t * val);			/* value destination */
+
+int mpu_write_byte(struct mpu_dev * const dev,
+		const mpu_reg_t reg, 		/* device register */
+		const mpu_reg_t val);		/* value to write */
+
+int mpu_write_word(struct mpu_dev * const dev,
+		const mpu_reg_t reg, 		/* device register */
+		const mpu_word_t val);		/* value to write */
+
+#endif

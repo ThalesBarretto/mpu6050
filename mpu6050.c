@@ -141,7 +141,7 @@ uint8_t mpu_cfg[10][2] = {
 	{ INT_PIN_CFG, 	0x00}, //6
 	{ INT_ENABLE,  	0x00}, //7
 	{ USER_CTRL,   	0x60}, //8
-	{ FIFO_ENABLE, 	0x00}  //9
+	{ FIFO_EN, 	0x00}  //9
 };
 
 /* Device management functions */
@@ -1203,7 +1203,7 @@ void mpu_cfg_set_samplerate(int *fd, double sampling_rate)
 void mpu_cfg_set_gyro(int *fd, uint16_t range)
 {
 	printf("%s\n", __func__);
-	uint8_t fifov = (0x70 | mpu_cfg_read(fd, FIFO_ENABLE));
+	uint8_t fifov = (0x70 | mpu_cfg_read(fd, FIFO_EN));
 	uint8_t regv;
 	switch (range)	{
 	case 250 :	regv = 0x00; break;
@@ -1213,7 +1213,7 @@ void mpu_cfg_set_gyro(int *fd, uint16_t range)
 	default : 	regv = 0x00;
 			fifov &= ~0x70;	break;
 	}
-	mpu_cfg_set_table(fd, FIFO_ENABLE, fifov);
+	mpu_cfg_set_table(fd, FIFO_EN, fifov);
 	mpu_cfg_set_table(fd, GYRO_CONFIG, regv << 3);
 	mpu_cfg_get_table(fd);
 }
@@ -1230,7 +1230,7 @@ void mpu_cfg_set_gyro(int *fd, uint16_t range)
 void mpu_cfg_set_accel(int *fd, uint16_t range)
 {
 //	printf("%s\n", __func__);
-	uint8_t  fifov = (0x08 | mpu_cfg_read(fd,FIFO_ENABLE));
+	uint8_t  fifov = (0x08 | mpu_cfg_read(fd,FIFO_EN));
 	uint8_t regv;
 //	printf("%s range=%i regv=%x\n", __func__, range, regv);
 	switch (range) {
@@ -1243,8 +1243,8 @@ void mpu_cfg_set_accel(int *fd, uint16_t range)
 			break;
 	}
 //	printf("%s got  regv=%x\n", __func__, regv);
-//	printf("%s calling set_table FIFO_ENABLE\n", __func__);
-	mpu_cfg_set_table(fd, FIFO_ENABLE, fifov);
+//	printf("%s calling set_table FIFO_EN\n", __func__);
+	mpu_cfg_set_table(fd, FIFO_EN, fifov);
 
 //	printf("%s calling set_table ACCEL_CONFIG - passing regv=%x\n", __func__, regv);
 	mpu_cfg_set_table(fd, ACCEL_CONFIG, regv << 3);
@@ -1257,8 +1257,8 @@ void mpu_cfg_set_accel(int *fd, uint16_t range)
 void mpu_cfg_set_thermo(int *fd)
 {
 //	printf("%s\n", __func__);
-	uint8_t  fifov = (0x80 | mpu_cfg_read(fd,FIFO_ENABLE));
-	mpu_cfg_set_table(fd, FIFO_ENABLE, fifov);
+	uint8_t  fifov = (0x80 | mpu_cfg_read(fd,FIFO_EN));
+	mpu_cfg_set_table(fd, FIFO_EN, fifov);
 	mpu_cfg_get_table(fd);
 }
 
@@ -1415,7 +1415,7 @@ void mpu_cfg_get_table(int *fd)
 	for (int i =1; i < mpu_cfg[0][0]; i++) {
 //		printf("%s %i searching %s\n", __func__, i, mpu_regnames[mpu_cfg[i][0]]);
 		switch ( mpu_cfg[i][0] ) {
-		case FIFO_ENABLE :
+		case FIFO_EN :
 			/* CRUCIAL - raw[0] = active sensors + 1 */
 			switch (mpu_cfg[i][1]) {
 			case 0x08 : a_en = 1; g_en = 0; t_en = 0; raw[0] = 4; break;
@@ -1427,7 +1427,7 @@ void mpu_cfg_get_table(int *fd)
 			case 0x80 : a_en = 0; g_en = 0; t_en = 1; raw[0] = 2; break;
 			case 0x00 : a_en = 0; g_en = 0; t_en = 0; raw[0] = 1; break;
 			default :
-				printf("SHOULD NOT BE HERE found FIFO_ENABLE value: %x", mpu_cfg[i][1]);
+				printf("SHOULD NOT BE HERE found FIFO_EN value: %x", mpu_cfg[i][1]);
 				a_en = 0; g_en = 0; t_en = 0; raw[0] = 0;
 				getchar();
 				break;

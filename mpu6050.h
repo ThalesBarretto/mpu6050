@@ -46,9 +46,9 @@
  * MPU-6050 register definitions
  *
  * Here are defined all registers documented in:
- * 	MPU-6000/6050 Product Specification rev. 3.4. (08/19/2013) PS-MPU-6000A-00
- * 	MPU-6000/6050 Register Map and Desription rev. 4.12. (08/19/2013) RM-MPU-6000A-00
- *	MPU Hardware Offset Registers Application Note rev 1.0 (02/21/2014) AN-XX-XXXX-XX
+ * MPU-6000/6050 Product Specification rev. 3.4. (08/19/2013) PS-MPU-6000A-00
+ * MPU-6000/6050 Register Map and Desription rev. 4.12. (08/19/2013) RM-MPU-6000A-00
+ * MPU Hardware Offset Registers Application Note rev 1.0 (02/21/2014) AN-XX-XXXX-XX
  *
  * Accel offset registers
  * 1. Initial values contain factory trim values. Read value, apply bias;
@@ -60,7 +60,6 @@
  * 2. Format is in +-1000dps scale (1dps = 32.8 LSB)
  * 3. Bit 0 on the low byte of each axis is reserved and must be unchanged.
  */
-
 //0 0x00
 #define AUX_VDDIO		1
 //2 0x02
@@ -96,7 +95,7 @@
 #define MOT_DUR			32
 #define ZRMOT_THR		33
 #define ZRMOT_DUR		34
-#define FIFO_ENABLE		35
+#define FIFO_EN			35
 #define I2C_MST_CTRL		36
 #define I2C_SLV0_ADDR		37
 #define I2C_SLV0_REG		38
@@ -180,10 +179,43 @@
 #define FIFO_R_W 		116
 #define WHO_AM_I		117
 
+/* MPU6050 bit range definitions */
+#define TEMP_DIS_BIT	(uint8_t)(0x08)
+
+#define CLKSEL_BIT	(uint8_t)(0x07)
+#define CLKSEL_0	(uint8_t)(0x00)
+#define CLKSEL_1	(uint8_t)(0x01)
+#define CLKSEL_2	(uint8_t)(0x02)
+#define CLKSEL_3	(uint8_t)(0x03)
+#define CLKSEL_4	(uint8_t)(0x04)
+#define CLKSEL_5	(uint8_t)(0x05)
+#define CLKSEL_6	(uint8_t)(0x06)
+#define CLKSEL_7	(uint8_t)(0x07)
+
+#define DLPF_CFG_BIT	(uint8_t)(0x07)
+#define DLPF_CFG_0	(uint8_t)(0x00)
+#define DLPF_CFG_1	(uint8_t)(0x01)
+#define DLPF_CFG_2	(uint8_t)(0x02)
+#define DLPF_CFG_3	(uint8_t)(0x03)
+#define DLPF_CFG_4	(uint8_t)(0x04)
+#define DLPF_CFG_5	(uint8_t)(0x05)
+#define DLPF_CFG_6	(uint8_t)(0x06)
+#define DLPF_CFG_7	(uint8_t)(0x07)
+
+#define FS_SEL_BIT	(uint8_t)(0x18)
+#define FS_SEL_0	(uint8_t)(0x00)
+#define FS_SEL_1	(uint8_t)(0x08)
+#define FS_SEL_2	(uint8_t)(0x10)
+#define FS_SEL_3	(uint8_t)(0x18)
+
+#define AFS_SEL_BIT	(uint8_t)(0x18)
+#define AFS_SEL_0	(uint8_t)(0x00)
+#define AFS_SEL_1	(uint8_t)(0x08)
+#define AFS_SEL_2	(uint8_t)(0x10)
+#define AFS_SEL_3	(uint8_t)(0x18)
 
 
-
-
+uint8_t mpu_regvalues[128];
 
 char mpu_regnames[ 128 ][ 20 ] = {
 [ AUX_VDDIO ]		= "AUX_VDDIO",
@@ -214,7 +246,7 @@ char mpu_regnames[ 128 ][ 20 ] = {
 [ MOT_DUR ]		= "MOT_DUR",
 [ ZRMOT_THR ]		= "ZRMOT_THR",
 [ ZRMOT_DUR ]		= "ZRMOT_DUR",
-[ FIFO_ENABLE ]		= "FIFO_ENABLE",
+[ FIFO_EN ]		= "FIFO_EN",
 [ I2C_MST_CTRL ]	= "I2C_MST_CTRL",
 [ I2C_SLV0_ADDR ] 	= "I2C_SLV0_ADDR",
 [ I2C_SLV0_REG ]	= "I2C_SLV0_REG",
@@ -252,35 +284,35 @@ char mpu_regnames[ 128 ][ 20 ] = {
 [ GYRO_YOUT_L ] 	= "GYRO_YOUT_L",
 [ GYRO_ZOUT_H ] 	= "GYRO_ZOUT_H",
 [ GYRO_ZOUT_L ] 	= "GYRO_ZOUT_L",
-[  EXT_SENS_DATA_00 ]	= "EXT_SENS_DATA_00",
-[  EXT_SENS_DATA_01 ]	= "EXT_SENS_DATA_01",
-[  EXT_SENS_DATA_02 ]	= "EXT_SENS_DATA_02",
-[  EXT_SENS_DATA_03 ]	= "EXT_SENS_DATA_03",
-[  EXT_SENS_DATA_04 ]	= "EXT_SENS_DATA_04",
-[  EXT_SENS_DATA_05 ]	= "EXT_SENS_DATA_05",
-[  EXT_SENS_DATA_06 ]	= "EXT_SENS_DATA_06",
-[  EXT_SENS_DATA_07 ]	= "EXT_SENS_DATA_07",
-[  EXT_SENS_DATA_08 ]	= "EXT_SENS_DATA_08",
-[  EXT_SENS_DATA_09 ]	= "EXT_SENS_DATA_09",
-[  EXT_SENS_DATA_10 ]	= "EXT_SENS_DATA_10",
-[  EXT_SENS_DATA_11 ]	= "EXT_SENS_DATA_11",
-[  EXT_SENS_DATA_12 ]	= "EXT_SENS_DATA_12",
-[  EXT_SENS_DATA_13 ]	= "EXT_SENS_DATA_13",
-[  EXT_SENS_DATA_14 ]	= "EXT_SENS_DATA_14",
-[  EXT_SENS_DATA_15 ]	= "EXT_SENS_DATA_15",
-[  EXT_SENS_DATA_16 ]	= "EXT_SENS_DATA_16",
-[  EXT_SENS_DATA_17 ]	= "EXT_SENS_DATA_17",
-[  EXT_SENS_DATA_18 ]	= "EXT_SENS_DATA_18",
-[  EXT_SENS_DATA_19 ]	= "EXT_SENS_DATA_19",
-[  EXT_SENS_DATA_20 ]	= "EXT_SENS_DATA_20",
-[  EXT_SENS_DATA_21 ]	= "EXT_SENS_DATA_21",
-[  EXT_SENS_DATA_22 ]	= "EXT_SENS_DATA_22",
-[  EXT_SENS_DATA_23 ]	= "EXT_SENS_DATA_23",
+[ EXT_SENS_DATA_00 ]	= "EXT_SENS_DATA_00",
+[ EXT_SENS_DATA_01 ]	= "EXT_SENS_DATA_01",
+[ EXT_SENS_DATA_02 ]	= "EXT_SENS_DATA_02",
+[ EXT_SENS_DATA_03 ]	= "EXT_SENS_DATA_03",
+[ EXT_SENS_DATA_04 ]	= "EXT_SENS_DATA_04",
+[ EXT_SENS_DATA_05 ]	= "EXT_SENS_DATA_05",
+[ EXT_SENS_DATA_06 ]	= "EXT_SENS_DATA_06",
+[ EXT_SENS_DATA_07 ]	= "EXT_SENS_DATA_07",
+[ EXT_SENS_DATA_08 ]	= "EXT_SENS_DATA_08",
+[ EXT_SENS_DATA_09 ]	= "EXT_SENS_DATA_09",
+[ EXT_SENS_DATA_10 ]	= "EXT_SENS_DATA_10",
+[ EXT_SENS_DATA_11 ]	= "EXT_SENS_DATA_11",
+[ EXT_SENS_DATA_12 ]	= "EXT_SENS_DATA_12",
+[ EXT_SENS_DATA_13 ]	= "EXT_SENS_DATA_13",
+[ EXT_SENS_DATA_14 ]	= "EXT_SENS_DATA_14",
+[ EXT_SENS_DATA_15 ]	= "EXT_SENS_DATA_15",
+[ EXT_SENS_DATA_16 ]	= "EXT_SENS_DATA_16",
+[ EXT_SENS_DATA_17 ]	= "EXT_SENS_DATA_17",
+[ EXT_SENS_DATA_18 ]	= "EXT_SENS_DATA_18",
+[ EXT_SENS_DATA_19 ]	= "EXT_SENS_DATA_19",
+[ EXT_SENS_DATA_20 ]	= "EXT_SENS_DATA_20",
+[ EXT_SENS_DATA_21 ]	= "EXT_SENS_DATA_21",
+[ EXT_SENS_DATA_22 ]	= "EXT_SENS_DATA_22",
+[ EXT_SENS_DATA_23 ]	= "EXT_SENS_DATA_23",
 [ MOT_DETECT_STATUS ]	= "MOT_DETECT_STATUS",
-[  I2C_SLV0_DO ]	= "I2C_SLV0_DO",
-[  I2C_SLV1_DO ]	= "I2C_SLV1_DO",
-[  I2C_SLV2_DO ]	= "I2C_SLV2_DO",
-[  I2C_SLV3_DO ]	= "I2C_SLV0_DO",
+[ I2C_SLV0_DO ]		= "I2C_SLV0_DO",
+[ I2C_SLV1_DO ]		= "I2C_SLV1_DO",
+[ I2C_SLV2_DO ]		= "I2C_SLV2_DO",
+[ I2C_SLV3_DO ]		= "I2C_SLV0_DO",
 [ I2C_MST_DELAY_CTRL ]	= "I2C_MST_DELAY_CTRL",
 [ SIGNAL_PATH_RESET ]	= "SIGNAL_PATH_RESET",
 [ MOT_DETECT_CTRL ]	= "MOT_DETECT_CTRL",
@@ -298,24 +330,8 @@ char mpu_regnames[ 128 ][ 20 ] = {
 [ WHO_AM_I ]		= "WHO_AM_I",
 };
 
-/* CONFIG - default */
-uint8_t mpu6050_defcfg[10][2] = {
-	{ 10,		   0},
-	{ PWR_MGMT_1,  	0x01},
-	{ ACCEL_CONFIG,	0x00},
-	{ GYRO_CONFIG, 	0x00},
-	{ SMPLRT_DIV,	0x00},
-	{ CONFIG,      	0x00},
-	{ INT_PIN_CFG, 	0x00},
-	{ INT_ENABLE,  	0x00},
-	{ USER_CTRL,   	0x60},
-	{ FIFO_ENABLE, 	0x00}
-};
 
-
-
-
-#endif
+#endif /* _MPU_6050_H_ */
 
 #ifdef __cplusplus
  	}

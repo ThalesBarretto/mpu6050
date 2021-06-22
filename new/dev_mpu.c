@@ -1,94 +1,136 @@
-#include <stdlib.h>	   /* for malloc(), free(), exit() */
-#include <stdio.h>	   /* for printf(), scanf(), fopen(), perror() */
-#include <string.h>	   /* for memcpy() */
-#include <unistd.h>	   /* for close(), write(), getopt(), size_t */
-#include <inttypes.h>	   /* for uint8_t, uint16_t, etc */
-#include <stdint.h>	   /* for uint8_t, uint16_t, etc */
-#include <stddef.h>	   /* for size_t */
-#include <stdbool.h>	   /* for bool */
-#include <fcntl.h>	   /* for open() */
-#include <sys/stat.h>	   /* for open() */
-#include <sys/types.h>	   /* for open() */
-#include <sys/ioctl.h>	   /* for ioctl() */
-#include <linux/types.h>   /* for __u8, __s32 */
-#include <i2c/smbus.h> 	   /* for i2c_smbus_x */
-#include <linux/i2c.h> 	   /* for i2c_smbus_x */
-#include <linux/i2c-dev.h> /* for i2c_smbus_x */
-#include "dev_mpu_header.h"
-#include <stdio.h>
-#include <math.h>
-
+#include "dev_mpu.h"
 	
-int mpu_init(	const char * path,
-		const uint8_t address,
-		struct mpu_dev **mpudev);
+const struct mpu_cfg mpu6050_defcfg = {
+	.cfg =	{
+		{ PWR_MGMT_1,   0x03},	/* power on, temp enabled, clock gyro_z */
+		{ PWR_MGMT_2,   0x00},	/* no standby, full on			*/
+		{ CONFIG,       0x00},	/* dlpf off				*/
+		{ SMPLRT_DIV,   0x4F},	/* divisor = 80(1+79), rate = 100	*/
+		{ ACCEL_CONFIG, 0x00},	/* +-2g 				*/
+		{ GYRO_CONFIG,  0x00},	/* +-250 deg/s 				*/
+		{ USER_CTRL,    0x60},	/* fifo enabled, aux i2c master mode	*/
+		{ FIFO_EN,  	0xF8},	/* temp, accel, gyro buffered		*/
+		{ INT_PIN_CFG,  0x00},	/* interrupts disabled			*/
+		{ INT_ENABLE,   0x00},	/* interrupts disabled			*/
+	}
+};
 
-int mpu_destroy(struct mpu_dev * mpudev);
+uint8_t mpu_regvalues[128];
 
-void mpu_print_data(struct mpu_dev *dev, int times);
+char mpu_regnames[ 128 ][ 32 ] = {
+[ AUX_VDDIO ]		= "AUX_VDDIO",
+[ XA_OFFS_USRH ] 	= "XA_OFFS_USRH",
+[ XA_OFFS_USRL ] 	= "XA_OFFS_USRL",
+[ YA_OFFS_USRH ] 	= "YA_OFFS_USRH",
+[ YA_OFFS_USRL ] 	= "YA_OFFS_USRL",
+[ ZA_OFFS_USRH ] 	= "ZA_OFFS_USRH",
+[ ZA_OFFS_USRL ] 	= "ZA_OFFS_USRL",
+[ XG_OFFS_USRH ] 	= "XG_OFFS_USRH",
+[ XG_OFFS_USRL ] 	= "XG_OFFS_USRL",
+[ YG_OFFS_USRH ] 	= "YG_OFFS_USRH",
+[ YG_OFFS_USRL ] 	= "YG_OFFS_USRL",
+[ ZG_OFFS_USRH ] 	= "ZG_OFFS_USRH",
+[ ZG_OFFS_USRL ]	= "ZG_OFFS_USRL",
+[ PROD_ID ] 		= "PROD_ID",
+[ SELF_TEST_X ] 	= "SELF_TEST_X",
+[ SELF_TEST_Y ]		= "SELF_TEST_Y",
+[ SELF_TEST_Z ]		= "SELF_TEST_Z",
+[ SELF_TEST_A ]		= "SELF_TEST_A",
+[ SMPLRT_DIV ]		= "SMPLRT_DIV",
+[ CONFIG ]		= "CONFIG",
+[ GYRO_CONFIG ]		= "GYRO_CONFIF",
+[ ACCEL_CONFIG ]	= "ACCEL_CONFIG",
+[ FF_THR ]		= "FF_THR",
+[ FF_DUR ]		= "FF_DUR",
+[ MOT_THR ]		= "MOT_THR",
+[ MOT_DUR ]		= "MOT_DUR",
+[ ZRMOT_THR ]		= "ZRMOT_THR",
+[ ZRMOT_DUR ]		= "ZRMOT_DUR",
+[ FIFO_EN ]		= "FIFO_EN",
+[ I2C_MST_CTRL ]	= "I2C_MST_CTRL",
+[ I2C_SLV0_ADDR ] 	= "I2C_SLV0_ADDR",
+[ I2C_SLV0_REG ]	= "I2C_SLV0_REG",
+[ I2C_SLV0_CTRL ] 	= "I2C_SLV0_CTRL",
+[ I2C_SLV1_ADDR ]	= "I2C_SLV1_ADDR",
+[ I2C_SLV1_REG ]	= "I2C_SLV1_REG",
+[ I2C_SLV1_CTRL ]	= "I2C_SLV1_CTRL",
+[ I2C_SLV2_ADDR ]	= "I2C_SLV2_ADDR",
+[ I2C_SLV2_REG ]	= "I2C_SLV2_REG",
+[ I2C_SLV2_CTRL ]	= "I2C_SLV2_CTRL",
+[ I2C_SLV3_ADDR ]	= "I2C_SLV3_ADDR",
+[ I2C_SLV3_REG ]	= "I2C_SLV3_REG",
+[ I2C_SLV3_CTRL ]	= "I2C_SLV3_CTRL",
+[ I2C_SLV4_ADDR ]	= "I2C_SLV4_ADDR",
+[ I2C_SLV4_REG ]	= "I2C_SLV4_REG",
+[ I2C_SLV4_DO ]		= "I2C_SLV4_DO",
+[ I2C_SLV4_CTRL ]	= "I2C_SLV4_CTRL",
+[ I2C_SLV4_DI ]		= "I2C_SLV4_DI",
+[ I2C_MAST_STATUS ]	= "I2C_MST_STATUS",
+[ INT_PIN_CFG ]		= "INT_PIN_CFG",
+[ INT_ENABLE ]		= "INT_ENABLE",
+[ DMP_INT_STATUS ] 	= "DMP_INT_STATUS",
+[ INT_STATUS ]		= "INT_STATUS",
+[ ACCEL_XOUT_H ] 	= "ACCEL_XOUT_H",
+[ ACCEL_XOUT_L ] 	= "ACCEL_XOUT_L",
+[ ACCEL_YOUT_H ] 	= "ACCEL_YOUT_H",
+[ ACCEL_YOUT_L ] 	= "ACCEL_YOUT_L",
+[ ACCEL_ZOUT_H ] 	= "ACCEL_ZOUT_H ",
+[ ACCEL_ZOUT_L ] 	= "ACCEL_ZOUT_L",
+[ TEMP_OUT_H ] 		= "TEMP_OUT_H",
+[ TEMP_OUT_L ] 		= "TEMP_OUT_L",
+[ GYRO_XOUT_H ] 	= "GYRO_XOUT_H",
+[ GYRO_XOUT_L ] 	= "GYRO_XOUT_L",
+[ GYRO_YOUT_H ] 	= "GYRO_YOUT_H",
+[ GYRO_YOUT_L ] 	= "GYRO_YOUT_L",
+[ GYRO_ZOUT_H ] 	= "GYRO_ZOUT_H",
+[ GYRO_ZOUT_L ] 	= "GYRO_ZOUT_L",
+[ EXT_SENS_DATA_00 ]	= "EXT_SENS_DATA_00",
+[ EXT_SENS_DATA_01 ]	= "EXT_SENS_DATA_01",
+[ EXT_SENS_DATA_02 ]	= "EXT_SENS_DATA_02",
+[ EXT_SENS_DATA_03 ]	= "EXT_SENS_DATA_03",
+[ EXT_SENS_DATA_04 ]	= "EXT_SENS_DATA_04",
+[ EXT_SENS_DATA_05 ]	= "EXT_SENS_DATA_05",
+[ EXT_SENS_DATA_06 ]	= "EXT_SENS_DATA_06",
+[ EXT_SENS_DATA_07 ]	= "EXT_SENS_DATA_07",
+[ EXT_SENS_DATA_08 ]	= "EXT_SENS_DATA_08",
+[ EXT_SENS_DATA_09 ]	= "EXT_SENS_DATA_09",
+[ EXT_SENS_DATA_10 ]	= "EXT_SENS_DATA_10",
+[ EXT_SENS_DATA_11 ]	= "EXT_SENS_DATA_11",
+[ EXT_SENS_DATA_12 ]	= "EXT_SENS_DATA_12",
+[ EXT_SENS_DATA_13 ]	= "EXT_SENS_DATA_13",
+[ EXT_SENS_DATA_14 ]	= "EXT_SENS_DATA_14",
+[ EXT_SENS_DATA_15 ]	= "EXT_SENS_DATA_15",
+[ EXT_SENS_DATA_16 ]	= "EXT_SENS_DATA_16",
+[ EXT_SENS_DATA_17 ]	= "EXT_SENS_DATA_17",
+[ EXT_SENS_DATA_18 ]	= "EXT_SENS_DATA_18",
+[ EXT_SENS_DATA_19 ]	= "EXT_SENS_DATA_19",
+[ EXT_SENS_DATA_20 ]	= "EXT_SENS_DATA_20",
+[ EXT_SENS_DATA_21 ]	= "EXT_SENS_DATA_21",
+[ EXT_SENS_DATA_22 ]	= "EXT_SENS_DATA_22",
+[ EXT_SENS_DATA_23 ]	= "EXT_SENS_DATA_23",
+[ MOT_DETECT_STATUS ]	= "MOT_DETECT_STATUS",
+[ I2C_SLV0_DO ]		= "I2C_SLV0_DO",
+[ I2C_SLV1_DO ]		= "I2C_SLV1_DO",
+[ I2C_SLV2_DO ]		= "I2C_SLV2_DO",
+[ I2C_SLV3_DO ]		= "I2C_SLV0_DO",
+[ I2C_MST_DELAY_CTRL ]	= "I2C_MST_DELAY_CTRL",
+[ SIGNAL_PATH_RESET ]	= "SIGNAL_PATH_RESET",
+[ MOT_DETECT_CTRL ]	= "MOT_DETECT_CTRL",
+[ USER_CTRL ]		= "USER_CTRL",
+[ PWR_MGMT_1 ]		= "PWR_MGMT_1",
+[ PWR_MGMT_2 ]		= "PWR_MGMT_2",
+[ MEM_R_W ] 		= "MEM_R_W",
+[ BANK_SEL ] 		= "BANK_SEL",
+[ MEM_START_ADDR ] 	= "MEM_START_ADDR",
+[ PRGM_START_H ] 	= "PRGM_START_H",
+[ PRGM_START_L ] 	= "PRGM_START_L",
+[ FIFO_COUNT_H ]	= "FIFO_COUNT_H",
+[ FIFO_COUNT_L ]	= "FIFO_COUNT_L",
+[ FIFO_R_W ]		= "FIFO_R_W",
+[ WHO_AM_I ]		= "WHO_AM_I",
+};
 
-int mpu_ctl_selftest(struct mpu_dev * dev);
-int mpu_ctl_selftest_enable_accel(struct mpu_dev *dev);
-int mpu_ctl_selftest_enable_gyro(struct mpu_dev *dev);
-int mpu_ctl_selftest_disable_accel(struct mpu_dev *dev);
-int mpu_ctl_selftest_disable_gyro(struct mpu_dev *dev);
 
-int mpu_ctl_fifo_enable		(struct mpu_dev *dev);
-int mpu_ctl_fifo_enable_accel	(struct mpu_dev *dev);
-int mpu_ctl_fifo_enable_gyro	(struct mpu_dev *dev);
-int mpu_ctl_fifo_enable_temp	(struct mpu_dev *dev);
-int mpu_ctl_fifo_disable	(struct mpu_dev *dev);
-int mpu_ctl_fifo_disable_accel	(struct mpu_dev *dev);
-int mpu_ctl_fifo_disable_gyro	(struct mpu_dev *dev);
-int mpu_ctl_fifo_disable_temp	(struct mpu_dev *dev);
-int mpu_ctl_fifo_count		(struct mpu_dev *dev, int *count);
-int mpu_ctl_fifo_data		(struct mpu_dev *dev);
-int mpu_ctl_fifo_flush		(struct mpu_dev *dev);
-int mpu_ctl_fifo_reset		(struct mpu_dev *dev);
-
-int mpu_ctl_i2c_mst_reset	(struct mpu_dev *dev);
-int mpu_ctl_sig_cond_reset	(struct mpu_dev *dev);
-
-
-int mpu_ctl_wake(struct mpu_dev *  dev);
-
-int mpu_ctl_samplerate( struct mpu_dev * dev,
-			unsigned int rate_hz);
-
-int mpu_ctl_dlpf(struct mpu_dev * dev,
-	       	 unsigned int dlpf);
-
-int mpu_ctl_accel_range( struct mpu_dev * dev,
-			unsigned int range);
-
-int mpu_ctl_gyro_range( struct mpu_dev * dev,
-			unsigned int range);
-
-int mpu_ctl_temperature(struct mpu_dev * dev,
-			bool temp_on);
-
-int mpu_ctl_clocksource(struct mpu_dev * dev,
-			mpu_reg_t clksel);
-
-int mpu_read_byte(struct mpu_dev * const dev,
-		const mpu_reg_t reg, 		/* device register */
-		mpu_reg_t * val);		/* value destination */
-
-int mpu_read_word(struct mpu_dev * const dev,
-		const mpu_reg_t reg, 		/* device register */
-		mpu_word_t * val);		/* value destination */
-
-int mpu_read_data(struct mpu_dev * const dev,
-		const mpu_reg_t reg, 		/* device register */
-		int16_t * val);			/* value destination */
-
-int mpu_write_byte(struct mpu_dev * const dev,
-		const mpu_reg_t reg, 		/* device register */
-		const mpu_reg_t val);		/* value to write */
-
-int mpu_write_word(struct mpu_dev * const dev,
-		const mpu_reg_t reg, 		/* device register */
-		const mpu_word_t val);		/* value to write */
 /* helpers - internal use only */
 static int mpu_dev_bind(const char * path, 
 			const mpu_reg_t address,
@@ -128,84 +170,6 @@ static int mpu_cfg_parse_INT_ENABLE(	struct mpu_dev * dev);
 static int mpu_cfg_parse_INT_PIN_CFG(	struct mpu_dev * dev);
 
 static int mpu_fifo_data(struct mpu_dev *dev, int16_t *data);
-
-#define MPUDEV_IS_NULL(dev)	((NULL == (dev)) ||      \
-				 (NULL == (dev)->dat) || \
-				 (NULL == (dev)->cfg) || \
-				 (NULL == (dev)->bus) || \
-				 (NULL == (dev)->cal))
-
-#define MPUDEV_NOT_NULL(dev)	((NULL != (dev)) &&      \
-				 (NULL != (dev)->dat) && \
-				 (NULL != (dev)->cfg) && \
-				 (NULL != (dev)->bus) && \
-				 (NULL != (dev)->cal))
-
-int mpu_read_byte(struct mpu_dev * const dev,
-		const mpu_reg_t reg,
-		mpu_reg_t *val)
-{
-	if ((NULL == dev) || (NULL == dev->bus))
-		return -1;
-
-	__s32 res = i2c_smbus_read_byte_data(*(dev->bus), reg);
-
-	if (res < 0) /* read failed - bus error */
-		return -1;
-
-	*val = (mpu_reg_t) res;
-	return 0;
-	
-}
-
-int mpu_write_byte(struct mpu_dev * const dev,
-		const mpu_reg_t reg,
-		const mpu_reg_t val)
-{
-	if ((NULL == dev) || (NULL == dev->bus))
-		return -1;
-
-	__s32 res = i2c_smbus_write_byte_data(*(dev->bus), reg, val);
-
-	if (res < 0) /* read failed - bus error */
-		return -1;
-
-	return 0;
-	
-}
-
-int mpu_read_word(struct mpu_dev * const dev,
-		const mpu_reg_t reg,
-		mpu_word_t *val)
-{
-	if ((NULL == dev) || (NULL == dev->bus))
-		return -1;
-
-	__s32 res = i2c_smbus_read_word_data(*(dev->bus), reg);
-
-	if (res < 0) /* write byte failed - bus error */
-		return -1;
-
-	*val = (mpu_word_t) res;
-	return 0;
-	
-}
-
-int mpu_write_word(struct mpu_dev * const dev,
-		const mpu_reg_t reg,
-		const mpu_word_t val)
-{
-	if ((NULL == dev) || (NULL == dev->bus))
-		return -1;
-
-	__s32 res = i2c_smbus_write_word_data(*(dev->bus), reg, val);
-
-	if (res < 0) /* write word failed - bus error */
-		return -1;
-
-	return 0;
-	
-}
 
 /*
  * USAGE:
@@ -293,6 +257,7 @@ int mpu_destroy(struct mpu_dev * dev)
 	
 	mpu_dat_reset(dev);
 	
+	free(dev->ang); dev->ang = NULL;
 	free(dev->cal); dev->cal = NULL;
 	free(dev->dat); dev->dat = NULL;
 	free(dev->cfg); dev->cfg = NULL;
@@ -345,10 +310,14 @@ static int mpu_cfg_set_CLKSEL(struct mpu_dev * dev, mpu_reg_t clksel)
 
 	
 	switch(clksel) {
-		case 0: break; /* Internal 8 Mhz oscillator */
-		case 1: break; /* PLL with X axis gyroscope */
-		case 2: break; /* PLL with Y axis gyroscope */
-		case 3: break; /* PLL with Z axis gyroscope */
+		case CLKSEL_0: break; /* Internal 8 Mhz oscillator		*/
+		case CLKSEL_1: break; /* PLL with X axis gyroscope		*/
+		case CLKSEL_2: break; /* PLL with Y axis gyroscope		*/
+		case CLKSEL_3: break; /* PLL with Z axis gyroscope		*/
+		case CLKSEL_4: break; /* PLL with external 32.768 kHz reference	*/
+		case CLKSEL_5: break; /* PLL with external 19.2 MHz reference	*/
+		case CLKSEL_6: break; /* RESERVED */
+		case CLKSEL_7: break; /* Stops the clock, keeps timing in reset */
 		default: /* not supported */
 			return -1;
 	}
@@ -358,7 +327,7 @@ static int mpu_cfg_set_CLKSEL(struct mpu_dev * dev, mpu_reg_t clksel)
 	if ((mpu_read_byte(dev, PWR_MGMT_1, &val)) < 0)
 		return -1;
 	
-	val  &= (~0x07u); /* mask CLK_SEL bits */
+	val  &= (~CLKSEL_BIT); /* mask CLK_SEL bits */
 	
 	val  |= clksel;	 /* set  CLK_SEL bits */
 
@@ -790,16 +759,16 @@ static int mpu_cfg_parse_USER_CTRL(struct mpu_dev * dev)
 	if ((mpu_cfg_get_val(dev, USER_CTRL, &val)) < 0)
 		return -1;
 	if (val & FIFO_RESET_BIT) {
-		printf("FIFO_RESET_BIT set \n");
+		//printf("FIFO_RESET_BIT set \n");
 		return -1;
 	}
 	if (val & I2C_MST_RESET_BIT) {
-		printf("I2C_MST_RESET_BIT set\n");
+		//printf("I2C_MST_RESET_BIT set\n");
 		return -1;
 
 	}
 	if (val & SIG_COND_RESET_BIT) {
-		printf("SIG_COND_RESET_BIT set\n");
+		//printf("SIG_COND_RESET_BIT set\n");
 		return -1;
 	}
 
@@ -855,6 +824,8 @@ static int mpu_cfg_parse_FIFO_EN(struct mpu_dev * dev)
 
 	/* CRUCIAL - raw[0] = buffered sensors  */
 	dev->dat->raw[0] = words;
+	dev->fifosensors = words;
+	dev->fifomax = 1023;
 
 	return 0;
 }
@@ -1052,6 +1023,8 @@ int mpu_dat_set(struct mpu_dev * dev)
 	/* Associate data with meaningful names */
 	int count = 1;
 	if (dev->cfg->accel_fifo_en) {
+		dev->dat->AM = 0;
+		dev->AM  = &dev->dat->AM;
 		dev->dat->scl[count] = 1.0L/(double)dev->albs;
 		dev->dat->dat[count][0] = 0;
 		dev->Ax  = &dev->dat->dat[count][0];
@@ -1095,6 +1068,8 @@ int mpu_dat_set(struct mpu_dev * dev)
 		count++;
 	}
 	if (dev->cfg->xg_fifo_en)	{
+		dev->dat->GM = 0;
+		dev->GM  = &dev->dat->GM;
 		dev->dat->scl[count] = 1.0L/(double)dev->glbs;
 		dev->dat->dat[count][0] = 0;
 		dev->Gx  = &dev->dat->dat[count][0];
@@ -1107,6 +1082,8 @@ int mpu_dat_set(struct mpu_dev * dev)
 		count++;
 	}
 	if (dev->cfg->yg_fifo_en)	{
+		dev->dat->GM = 0;
+		dev->GM  = &dev->dat->GM;
 		dev->dat->scl[count] = 1.0L/(double)dev->glbs;
 		dev->dat->dat[count][0] = 0;
 		dev->Gy  = &dev->dat->dat[count][0];
@@ -1119,6 +1096,8 @@ int mpu_dat_set(struct mpu_dev * dev)
 		count++;
 	}
 	if (dev->cfg->zg_fifo_en)	{
+		dev->dat->GM = 0;
+		dev->GM  = &dev->dat->GM;
 		dev->dat->scl[count] = 1.0L/(double)dev->glbs;
 		dev->dat->dat[count][0] = 0;
 		dev->Gz  = &dev->dat->dat[count][0];
@@ -1178,6 +1157,8 @@ int mpu_dat_reset(struct mpu_dev * dev)
 	}
 
 	/* make everything point to null */
+	dev->AM  = NULL;
+	dev->GM  = NULL;
 	dev->Ax  = NULL;
 	dev->Ax2 = NULL;
 	dev->Axo = NULL;
@@ -1273,7 +1254,27 @@ int mpu_cal_reset(struct mpu_dev * dev)
 		dev->cal->off[i] = 0;
 		dev->cal->dri[i] = 0;
 	}
-	dev->cal->gra =1;
+	//dev->cal->gra = 0.94;		/* local gravity acceleration in m/s2 */
+	dev->cal->gra = 1;		/* local gravity acceleration in m/s2 */
+	dev->cal->xa_orig = 0;
+	dev->cal->ya_orig = 0;
+	dev->cal->za_orig = 0;
+	dev->cal->xg_orig = 0;
+	dev->cal->yg_orig = 0;
+	dev->cal->zg_orig = 0;
+	dev->cal->xa_cust = 0;
+	dev->cal->ya_cust = 0;
+	dev->cal->za_cust = 0;
+	dev->cal->xg_cust = 0;
+	dev->cal->yg_cust = 0;
+	dev->cal->zg_cust = 0;
+	dev->cal->xa_bias = 0.0L;
+	dev->cal->ya_bias = 0.0L;
+	dev->cal->za_bias = 0.0L;
+	dev->cal->xg_bias = 0.0L;
+	dev->cal->yg_bias = 0.0L;
+	dev->cal->zg_bias = 0.0L;
+	dev->cal->samples = 1000;
 
 	return 0;
 }
@@ -1299,10 +1300,13 @@ static int mpu_dev_allocate(struct mpu_dev **dev)
 	if (((*dev)->dat = (struct mpu_dat *)calloc(1, sizeof(struct mpu_dat))) == NULL)
 		goto exit_dev_dat;
 
+	if (((*dev)->ang = (struct mpu_ang *)calloc(1, sizeof(struct mpu_ang))) == NULL)
+		goto exit_dev_ang;
 	
 	return 0;
 
 	/* ensure pointers are NULL after free() */
+exit_dev_ang:	free((*dev)->ang); (*dev)->ang = NULL;
 exit_dev_dat:	free((*dev)->dat); (*dev)->dat = NULL;
 exit_dev_cal:	free((*dev)->cal); (*dev)->cal = NULL;
 exit_dev_cfg:	free((*dev)->cfg); (*dev)->cfg = NULL;
@@ -1369,7 +1373,6 @@ int mpu_diagnose(struct mpu_dev * dev)
 	printf("%-20s %6.0lf %s\n","Gyro bandwidth"	, dev->gbdw		,"(Hz)");
 	printf("%-20s %6.0lf %s\n","Gyro delay"		, dev->gdly		,"(ms)");
 	printf("----------------------------------------\n");
-
 	printf("%-20s %d\n","SLEEP BIT"		, dev->cfg->sleep );
 	printf("%-20s %d\n","CYCLE BIT"		, dev->cfg->cycle );
 	printf("%-20s %d\n","TEMP_DIS BIT"	, dev->cfg->temp_dis );
@@ -1398,7 +1401,6 @@ int mpu_diagnose(struct mpu_dev * dev)
 	printf("%-20s %d\n","DATA_RDY_EN BIT"	, dev->cfg->data_rdy_en );
 	printf("%-20s %d\n","raw[0]"		, dev->dat->raw[0] );
 	printf("----------------------------------------\n");
-
 	printf("ADDRESSES:\n");
 	printf("dat[1](%p) Ax=%p\n", dev->dat->dat[1], dev->Ax);
 	printf("dat[2](%p) Ay=%p\n", dev->dat->dat[2], dev->Ay);
@@ -1407,6 +1409,15 @@ int mpu_diagnose(struct mpu_dev * dev)
 	printf("dat[5](%p) Gx=%p\n", dev->dat->dat[5], dev->Gx);
 	printf("dat[6](%p) Gy=%p\n", dev->dat->dat[6], dev->Gy);
 	printf("dat[7](%p) Gz=%p\n", dev->dat->dat[7], dev->Gz);
+	printf("----------------------------------------\n");
+	printf("ADDRESSES:\n");
+	printf("squ[1](%p) Ax=%p\n", &dev->dat->squ[1], dev->Ax2);
+	printf("squ[2](%p) Ay=%p\n", &dev->dat->squ[2], dev->Ay2);
+	printf("squ[3](%p) Az=%p\n", &dev->dat->squ[3], dev->Az2);
+	printf("squ[4](%p) t =%p\n", &dev->dat->squ[4], dev->t);
+	printf("squ[5](%p) Gx=%p\n", &dev->dat->squ[5], dev->Gx2);
+	printf("squ[6](%p) Gy=%p\n", &dev->dat->squ[6], dev->Gy2);
+	printf("squ[7](%p) Gz=%p\n", &dev->dat->squ[7], dev->Gz2);
 	printf("----------------------------------------\n");
 	printf("SCALING:\n");
 	printf("scl[1](%lf) %lf\n", dev->dat->scl[1], 1/dev->albs);
@@ -1436,7 +1447,15 @@ int mpu_ctl_fifo_data(struct mpu_dev *dev)
 	if ((mpu_ctl_fifo_count(dev, &count)) < 0)
 		return -1;
 
-	if (count > 1023) { /* buffer overflow */
+//	if (dev->fifocnt > dev->fifomax) { /* buffer overflow */
+//		mpu_ctl_fifo_flush(dev);
+//	} else {
+//		while (dev->fifocnt < len) { /* buffer underflow */
+//			mpu_ctl_fifo_count(dev, &count);
+//		}
+//	}
+	//if (count > 1023) { /* buffer overflow */
+	if (dev->fifocnt > dev->fifomax) { /* buffer overflow */
 		mpu_ctl_fifo_flush(dev);
 	} else {
 		while (count < len) { /* buffer underflow */
@@ -1449,14 +1468,47 @@ int mpu_ctl_fifo_data(struct mpu_dev *dev)
 			return -1;
 		dev->dat->dat[i][0] = dev->dat->raw[i] * dev->dat->scl[i];
 		dev->dat->dat[i][1] = dev->dat->dat[i][0];
-		dev->dat->squ[i]    = dev->dat->dat[i][0] * dev->dat->dat[i][0];
 	}
 	if (dev->cfg->temp_fifo_en) {
 		*(dev->t) += 36.53;
 	}
+	if (dev->cfg->accel_fifo_en) {
+		*(dev->Ax) -= dev->cal->xa_bias; 
+		*(dev->Ay) -= dev->cal->ya_bias; 
+		*(dev->Az) -= dev->cal->za_bias; 
+		*(dev->Ax2) = *(dev->Ax) * *(dev->Ax); 
+		*(dev->Ay2) = *(dev->Ay) * *(dev->Ay); 
+		*(dev->Az2) = *(dev->Az) * *(dev->Az); 
+		*(dev->AM) = sqrtl(*(dev->Ax2) + *(dev->Ay2) + *(dev->Az2)); 
+	}
+	if (dev->cfg->xg_fifo_en && dev->cfg->yg_fifo_en && dev->cfg->zg_fifo_en ) {
+		*(dev->Gx) -= dev->cal->xg_bias; 
+		*(dev->Gy) -= dev->cal->yg_bias; 
+		*(dev->Gz) -= dev->cal->zg_bias; 
+		*(dev->Gx2) = *(dev->Gx) * *(dev->Gx); 
+		*(dev->Gy2) = *(dev->Gy) * *(dev->Gy); 
+		*(dev->Gz2) = *(dev->Gz) * *(dev->Gz); 
+		*(dev->GM) = sqrtl(*(dev->Gx2) + *(dev->Gy2) + *(dev->Gz2)); 
+	}
+	dev->samples++;
 
 	return 0;
 }
+
+//int mpu_ctl_fifo_count(struct mpu_dev *dev, int *count)
+//{
+//	if (MPUDEV_IS_NULL(dev))
+//		return -1;
+//
+//	uint16_t tem = 0;
+//	if ((mpu_read_word(dev, FIFO_COUNT_H, &tem)) < 0)
+//		return -1;
+//
+//	uint16_t buf = (tem << 8) | (tem >> 8);
+//	dev->fifocnt = buf;
+//
+//	return 0;
+//}
 
 int mpu_ctl_fifo_count(struct mpu_dev *dev, int *count)
 {
@@ -1473,6 +1525,22 @@ int mpu_ctl_fifo_count(struct mpu_dev *dev, int *count)
 	return 0;
 }
 
+//int mpu_ctl_fifo_flush(struct mpu_dev *dev)
+//{
+//	if (MPUDEV_IS_NULL(dev))
+//		return -1;
+//
+//	uint8_t dat = 0;
+//      mpu_ctl_fifo_count(dev);
+//	for (int i = 0; i < dev->fifocnt; i++) {
+//		if ((mpu_read_byte(dev, FIFO_R_W, &dat)) < 0)
+//			return -1;
+//	}
+//	dev->samples = 0;
+//
+//	return 0;
+//}
+
 int mpu_ctl_fifo_flush(struct mpu_dev *dev)
 {
 	if (MPUDEV_IS_NULL(dev))
@@ -1485,6 +1553,7 @@ int mpu_ctl_fifo_flush(struct mpu_dev *dev)
 		if ((mpu_read_byte(dev, FIFO_R_W, &dat)) < 0)
 			return -1;
 	}
+	dev->samples = 0;
 
 	return 0;
 }
@@ -1637,10 +1706,12 @@ int mpu_ctl_selftest(struct mpu_dev * dev)
 
 	/* restore old config */
 	memcpy((void *)dev->cfg, (void *)cfg_old, sizeof(struct mpu_cfg));
-	mpu_cfg_set(dev);
-	mpu_dat_set(dev);
 	free(cfg_old);
 	cfg_old = NULL;
+
+	mpu_cfg_set(dev);
+	mpu_dat_set(dev);
+	mpu_ctl_fifo_flush(dev);
 
 	return 0;
 }
@@ -1944,176 +2015,175 @@ int mpu_ctl_selftest_disable_gyro(struct mpu_dev *dev)
 	return 0;
 }
 
-void mpu_print_data(struct mpu_dev *dev, int times)
+int mpu_ctl_reset(struct mpu_dev *dev)
 {
-	for (int i = 0; i < times; i++) {
-		printf("%3d Hz:%#+3.0lf abdw=%#+4.2lf gbdw=%#+4.2lf  afr=%#+4.2lf  xfr=%#+4.2lf ", i, dev->sr, dev->abdw, dev->gbdw, dev->afr, dev->gfr);
-		for (int j = 1; j < (1 + dev->dat->raw[0]); j++) {
-			printf(" D[%d]=%+3.4lf", j, dev->dat->dat[j][0]);
-		}
-		printf("\n");
-	}
+	if (mpu_write_byte(dev, PWR_MGMT_1,DEVICE_RESET_BIT ) < 0)
+		return -1;
+
+	sleep(1);
+	if(mpu_ctl_wake(dev) < 0)
+		return -1;
+
+	sleep(1);
+	if (mpu_cfg_set(dev) < 0)
+		return -1;
+	if (mpu_dat_reset(dev) < 0)
+		return -1;
+	if (mpu_dat_set(dev) < 0)
+		return -1;
+
+	return 0;
 }
 
-void mpu_print_all(struct mpu_dev *dev, int times)
+
+int mpu_ctl_calibration_reset(struct mpu_dev *dev)
 {
-	for (int i = 0; i < times; i++) {
-		printf("%3d Hz:%#+3.0lf abdw=%#+4.2lf gbdw=%#+4.2lf  afr=%#+4.2lf  xfr=%#+4.2lf ",
-			       i, dev->sr, dev->abdw, dev->gbdw, dev->afr, dev->gfr);
-		printf("Hz:%3.0lf Ax:%+lf Ay:%+lf Az:%+lf Gx:%+lf Gy:%+lf Gz:%+lf Temperature:%+lf\n",
-				dev->sr,
-				*(dev->Ax), *(dev->Ay), *(dev->Az),
-				*(dev->Gx), *(dev->Gy), *(dev->Gz),
-				*(dev->t));
+	mpu_ctl_reset(dev); /* clear the OFFS_USRH registers */
+
+	mpu_read_data(dev, XA_OFFS_USRH, &dev->cal->xa_orig);
+	mpu_read_data(dev, YA_OFFS_USRH, &dev->cal->ya_orig);
+	mpu_read_data(dev, ZA_OFFS_USRH, &dev->cal->za_orig);
+	dev->cal->xg_orig = 0;
+	dev->cal->yg_orig = 0;
+	dev->cal->zg_orig = 0;
+	dev->cal->xa_cust = 0;
+	dev->cal->ya_cust = 0;
+	dev->cal->za_cust = 0;
+	dev->cal->xg_cust = 0;
+	dev->cal->yg_cust = 0;
+	dev->cal->zg_cust = 0;
+	dev->cal->xa_bias = 0.0L;
+	dev->cal->ya_bias = 0.0L;
+	dev->cal->za_bias = 0.0L;
+	dev->cal->xg_bias = 0.0L;
+	dev->cal->yg_bias = 0.0L;
+	dev->cal->zg_bias = 0.0L;
+	dev->cal->samples = 1000;
+
+	return 0;
+}
+
+int mpu_ctl_calibration(struct mpu_dev *dev)
+{
+	/* prepare the device for calibration */
+	struct mpu_cfg *cfg_old = calloc(1, sizeof(struct mpu_cfg));
+	memcpy((void *)cfg_old,  (void *)dev->cfg, sizeof(struct mpu_cfg));
+
+	mpu_ctl_calibration_reset(dev); /* clear OFFS_USRH registers and calibration data */
+	mpu_ctl_dlpf(dev, 5);
+	mpu_ctl_accel_range(dev, 16);
+	mpu_ctl_gyro_range(dev, 1000);
+	mpu_ctl_fifo_flush(dev);
+	dev->cal->samples = 1000;
+
+	long double xa_bias = 0;
+	long double ya_bias = 0;
+	long double za_bias = 0;
+	long double xg_bias = 0;
+	long double yg_bias = 0;
+	long double zg_bias = 0;
+	long double AM_bias = 0;
+	long double GM_bias = 0;
+	for (int i = 0; i < dev->cal->samples; i++) {
+		mpu_ctl_fifo_data(dev);
+		xa_bias += *(dev->Ax);
+		ya_bias += *(dev->Ay);
+		za_bias += *(dev->Az);
+		xg_bias += *(dev->Gx);
+		yg_bias += *(dev->Gy);
+		zg_bias += *(dev->Gz);
+		AM_bias += *(dev->AM);
+	}
+	xa_bias /= dev->cal->samples;
+	ya_bias /= dev->cal->samples;
+	za_bias /= dev->cal->samples;
+	xg_bias /= dev->cal->samples;
+	yg_bias /= dev->cal->samples;
+	zg_bias /= dev->cal->samples;
+	AM_bias /= dev->cal->samples;
+
+	long double a_factor = (dev->albs * dev->cal->gra) * dev->cal->AM_bias;
+	dev->cal->xa_cust = (dev->cal->xa_orig - (int16_t)((xa_bias)    * a_factor));
+	dev->cal->ya_cust = (dev->cal->ya_orig - (int16_t)((ya_bias)    * a_factor));
+	dev->cal->za_cust = (dev->cal->za_orig - (int16_t)((za_bias -1) * a_factor));
+	mpu_write_byte(dev, XA_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->xa_cust)>>8)&0xFF));
+	mpu_write_byte(dev, XA_OFFS_USRL,(uint8_t)((((uint16_t)dev->cal->xa_cust)    &0xFE) | (dev->cal->xa_orig & 0x1)));
+	mpu_write_byte(dev, YA_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->ya_cust)>>8)&0xFF));
+	mpu_write_byte(dev, YA_OFFS_USRL,(uint8_t)((((uint16_t)dev->cal->ya_cust)    &0xFE) | (dev->cal->ya_orig & 0x1)));
+	mpu_write_byte(dev, ZA_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->za_cust)>>8)&0xFF));
+	mpu_write_byte(dev, ZA_OFFS_USRL,(uint8_t)((((uint16_t)dev->cal->za_cust)    &0xFE) | (dev->cal->za_orig & 0x1)));
+
+	//long double g_factor = (dev->glbs * 1.0L);
+	long double gx_factor = (dev->glbs * 1.00169161L);
+	long double gy_factor = (dev->glbs * 1.00063285L);
+	long double gz_factor = (dev->glbs * 1.00112551L);
+	dev->cal->xg_cust = (dev->cal->xg_orig - (int16_t)(xg_bias * gx_factor ));
+	dev->cal->yg_cust = (dev->cal->yg_orig - (int16_t)(yg_bias * gy_factor ));
+	dev->cal->zg_cust = (dev->cal->zg_orig - (int16_t)(zg_bias * gz_factor ));
+	mpu_write_byte(dev, XG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->xg_cust)>>8)&0xFF));
+	mpu_write_byte(dev, XG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->xg_cust)&0xFF);
+	mpu_write_byte(dev, YG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->yg_cust)>>8)&0xFF));
+	mpu_write_byte(dev, YG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->yg_cust)&0xFF);
+	mpu_write_byte(dev, ZG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->zg_cust)>>8)&0xFF));
+	mpu_write_byte(dev, ZG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->zg_cust)&0xFF);
+
+	/* second pass - fine */
+	mpu_ctl_fifo_flush(dev);
+	xa_bias = 0;
+	ya_bias = 0;
+	za_bias = 0;
+	xg_bias = 0;
+	yg_bias = 0;
+	zg_bias = 0;
+	AM_bias = 0;
+	GM_bias = 0;
+	for (int i = 0; i <  dev->cal->samples; i++) {
+		mpu_ctl_fifo_data(dev);
+		xa_bias += *(dev->Ax);
+		ya_bias += *(dev->Ay);
+		za_bias += *(dev->Az);
+		xg_bias += *(dev->Gx);
+		yg_bias += *(dev->Gy);
+		zg_bias += *(dev->Gz);
+		AM_bias += *(dev->AM);
+	}
+	xa_bias /= dev->cal->samples;
+	ya_bias /= dev->cal->samples;
+	za_bias /= dev->cal->samples;
+	xg_bias /= dev->cal->samples;
+	yg_bias /= dev->cal->samples;
+	zg_bias /= dev->cal->samples;
+	AM_bias /= dev->cal->samples;
+	AM_bias -= 1;
+	za_bias -= 1;
+
+	dev->cal->xa_bias = xa_bias;
+	dev->cal->ya_bias = ya_bias;
+	dev->cal->za_bias = za_bias;
+	dev->cal->xg_bias = xg_bias;
+	dev->cal->yg_bias = yg_bias;
+	dev->cal->zg_bias = zg_bias;
+	dev->cal->AM_bias = AM_bias;
+	dev->cal->GM_bias = GM_bias;
+
+	/* restore old config */
+	memcpy((void *)dev->cfg, (void *)cfg_old, sizeof(struct mpu_cfg));
+	free(cfg_old);
+	cfg_old = NULL;
+
+	mpu_cfg_set(dev);
+	mpu_dat_set(dev);
+	mpu_ctl_fifo_flush(dev);
+
+	return 0;
+}
+
+
+void mpu_ctl_fix_axis(struct mpu_dev *dev)
+{
+	if (dev->cfg->accel_fifo_en) {
+		*(dev->Ax) *= -1.0L;
+		*(dev->Ay) *= -1.0L;
+		*(dev->Az) *= -1.0L;
 	}
 }
-//int mpu_ctl_selftest_driver(struct mpu_dev * dev)
-//{
-//	/* prepare the device for self-test */
-//	struct mpu_cfg *cfg_old = calloc(1, sizeof(struct mpu_cfg));
-//	memcpy((void *)cfg_old,  (void *)dev->cfg, sizeof(struct mpu_cfg));
-//	/* evaluate self-test response */
-//	long double (* st_off)[16] = calloc(16, sizeof(long double));
-//	long double  (* st_on)[16] = calloc(16, sizeof(long double));
-//	mpu_ctl_selftest_get_data(dev, st_off, false);
-//	mpu_ctl_selftest_get_data(dev, st_on , true);
-//	/* get self-test registers */
-//	uint8_t stx = 0;
-//	uint8_t sty = 0;
-//	uint8_t stz = 0;
-//	uint8_t sta = 0;
-//	mpu_read_byte(dev, SELF_TEST_X, &stx);
-//	mpu_read_byte(dev, SELF_TEST_Y, &sty);
-//	mpu_read_byte(dev, SELF_TEST_Z, &stz);
-//	mpu_read_byte(dev, SELF_TEST_A, &sta);
-//	uint8_t xa_st = ((stx & XA_TEST_42_BIT) >> 3) | ((sta & XA_TEST_10_BIT) >> 4);
-//	uint8_t ya_st = ((sty & YA_TEST_42_BIT) >> 3) | ((sta & YA_TEST_10_BIT) >> 2);
-//	uint8_t za_st = ((stz & ZA_TEST_42_BIT) >> 3) |  (sta & ZA_TEST_10_BIT);
-//	uint8_t xg_st =  (stx & XG_TEST_40_BIT);
-//	uint8_t yg_st =  (sty & YG_TEST_40_BIT);
-//	uint8_t zg_st =  (stz & ZG_TEST_40_BIT);
-//	printf(" xa_st = %Lf\n", (long double)xa_st); 
-//	printf(" ya_st = %Lf\n", (long double)ya_st); 
-//	printf(" za_st = %Lf\n", (long double)za_st); 
-//	printf(" xg_st = %Lf\n", (long double)xg_st); 
-//	printf(" yg_st = %Lf\n", (long double)yg_st); 
-//	printf(" zg_st = %Lf\n", (long double)zg_st); 
-//	/* ACCEL get factory trim values - formula inside inv_mpu.c, get_accel_prod_shift */
-//	long double ft_xa = 0.34L * (powl(0.92L/0.34L, ((long double)(xa_st -1)/14.0L))/30.0L);
-//	long double ft_ya = 0.34L * (powl(0.92L/0.34L, ((long double)(ya_st -1)/14.0L))/30.0L);
-//	long double ft_za = 0.34L * (powl(0.92L/0.34L, ((long double)(za_st -1)/14.0L))/30.0L);
-//	/* ACCEL evaluate reponse */
-//	long double xa_cus  = fabsl((* st_off)[0] - (long double)xa_st)/65536.0L;
-//	long double ya_cus  = fabsl((* st_off)[1] - (long double)ya_st)/65536.0L;
-//	long double za_cus  = fabsl((* st_off)[2] - (long double)za_st)/65536.0L;
-//	long double xa_var  = xa_cus/(ft_xa - 1.0L);
-//	long double ya_var  = ya_cus/(ft_ya - 1.0L);
-//	long double za_var  = za_cus/(ft_za - 1.0L);
-//	/* ACCEL evaluate reponse */
-//	long double xa_cus  = fabsl((* st_off)[0] - (long double)xa_st)/65536.0L;
-//	long double ya_cus  = fabsl((* st_off)[1] - (long double)ya_st)/65536.0L;
-//	long double za_cus  = fabsl((* st_off)[2] - (long double)za_st)/65536.0L;
-//	long double xa_var  = xa_cus/(ft_xa - 1.0L);
-//	long double ya_var  = ya_cus/(ft_ya - 1.0L);
-//	long double za_var  = za_cus/(ft_za - 1.0L);
-//	printf(" ft_xa  = %Lf\n", ft_xa ); 
-//	printf(" ft_ya  = %Lf\n", ft_ya ); 
-//	printf(" ft_za  = %Lf\n", ft_za ); 
-//	printf(" xa_cus = %Lf\n", xa_cus); 
-//	printf(" ya_cus = %Lf\n", ya_cus); 
-//	printf(" za_cus = %Lf\n", za_cus); 
-//	printf(" xa_var = %Lf\n", xa_var); 
-//	printf(" ya_var = %Lf\n", ya_var); 
-//	printf(" za_var = %Lf\n", za_var); 
-//	/* ACCEL evaluate tests */
-//	long double max_accel_var = 0.14L;
-//	long double max_g = 0.95L;
-//	long double min_g = 0.3L;
-//	long double max_xa_bias = (0.23L * 65535.0L);
-//	long double max_ya_bias = (0.23L * 65535.0L);
-//	long double max_za_bias = (0.18L * 65535.0L);
-//	printf("%-10s %Lf %Lf %s\n", "xa_var",		fabsl(xa_var),	max_accel_var,	fabsl(xa_var) > max_accel_var	? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "ya_var",		fabsl(ya_var),	max_accel_var,	fabsl(ya_var) > max_accel_var	? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "za_var",		fabsl(za_var),	max_accel_var,	fabsl(za_var) > max_accel_var	? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "xa_cus",		xa_cus,		max_g,		xa_cus > max_g			? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "ya_cus",		ya_cus,		max_g,		ya_cus > max_g 			? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "za_cus",		za_cus,		max_g,		za_cus > max_g 			? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "xa_cus",		xa_cus,		min_g,		xa_cus < min_g 			? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "ya_cus",		ya_cus,		min_g,		ya_cus < min_g 			? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "za_cus",		za_cus,		min_g,		za_cus < min_g 			? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "st_off[3]",	(* st_off)[0],	max_xa_bias,	(* st_off)[0] > max_xa_bias	? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "st_off[4]",	(* st_off)[1],	max_ya_bias,	(* st_off)[1] > max_ya_bias 	? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "st_off[5]",	(* st_off)[2],	max_za_bias,	(* st_off)[2] > max_za_bias 	? "fail": "pass");
-//	/* GYRO get factory trim values - formula nside inv_mpu.c, get_accel_prod_shift */
-//	long double ft_xg = (3275.0L/dev->glbs) * powl(1046L, (long double)(xg_st -1));
-//	long double ft_yg = (3275.0L/dev->glbs) * powl(1046L, (long double)(yg_st -1));
-//	long double ft_zg = (3275.0L/dev->glbs) * powl(1046L, (long double)(zg_st -1));
-//	/* GYRO evaluate reponse */
-//	long double xg_cus  = fabsl((* st_off)[3] - (long double)xg_st)/65536.0L;
-//	long double yg_cus  = fabsl((* st_off)[4] - (long double)yg_st)/65536.0L;
-//	long double zg_cus  = fabsl((* st_off)[5] - (long double)zg_st)/65536.0L;
-//	long double xg_var  = xg_cus/(ft_xa - 1.0L);
-//	long double yg_var  = yg_cus/(ft_ya - 1.0L);
-//	long double zg_var  = zg_cus/(ft_za - 1.0L);
-//	/* GYRO evaluate tests */
-//	long double max_gyro_var = 0.14L;
-//	long double min_dps = 10.0L;
-//	long double max_dps = 105.0L;
-//	long double max_gyro_bias = (20.0L * 65535.0);
-//	printf("%-10s %Lf %Lf %s\n", "xg_var",		fabsl(xg_var),	max_gyro_var,	fabsl(xg_var) > max_gyro_var	? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "yg_var",		fabsl(yg_var),	max_gyro_var,	fabsl(yg_var) > max_gyro_var	? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "zg_var",		fabsl(zg_var),	max_gyro_var,	fabsl(zg_var) > max_gyro_var	? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "xg_cus",		xg_cus,		max_dps,	xg_cus > max_dps		? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "yg_cus",		yg_cus,		max_dps,	yg_cus > max_dps		? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "zg_cus",		zg_cus,		max_dps,	zg_cus > max_dps		? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "xg_cus",		xg_cus,		min_dps,	xg_cus < min_dps		? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "yg_cus",		yg_cus,		min_dps,	yg_cus < min_dps		? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "zg_cus",		zg_cus,		min_dps,	zg_cus < min_dps		? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "st_off[3]",	(* st_off)[3],	max_gyro_bias,	(* st_off)[3] > max_gyro_bias	? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "st_off[4]",	(* st_off)[4],	max_gyro_bias,	(* st_off)[4] > max_gyro_bias	? "fail": "pass");
-//	printf("%-10s %Lf %Lf %s\n", "st_off[5]",	(* st_off)[5],	max_gyro_bias,	(* st_off)[5] > max_gyro_bias	? "fail": "pass");
-//
-//	/* restore old config */
-//	memcpy((void *)dev->cfg, (void *)cfg_old, sizeof(struct mpu_cfg));
-//	mpu_cfg_set(dev);
-//	mpu_dat_set(dev);
-//	free(cfg_old);
-//	cfg_old = NULL;
-//	return 0;
-//}
-//
-//int mpu_ctl_selftest_get_data(struct mpu_dev *dev, long double (* buffer)[16], bool tri)
-//{
-//	memcpy((void *)dev->cfg, (void *)&mpu6050_stcfg, sizeof(struct mpu_cfg));
-//	mpu_cfg_set(dev);
-//	mpu_dat_reset(dev);
-//	mpu_dat_set(dev);
-//	mpu_ctl_fifo_disable(dev);
-//	mpu_ctl_fifo_flush(dev);
-//	mpu_ctl_fifo_reset(dev);
-//	mpu_ctl_fifo_enable(dev);
-//	if (tri) { mpu_ctl_selftest_enable_accel(dev); }
-//
-//	/* Save the average value */
-//	mpu_ctl_fifo_enable(dev);
-//	int len = 1 + dev->dat->raw[0];
-//	int samples = 50;
-//	mpu_ctl_fifo_flush(dev);
-//	for (int i = 0; i < samples; i++) {
-//		mpu_ctl_fifo_data(dev);
-//		for (int j = 1; j < len; j++) {
-//			(*buffer)[j] += dev->dat->dat[j][0];
-//		}
-//	 }
-//	printf("Averaged over %d samples\n", samples);
-//	for (int j = 1; j < len; j++) {
-//		(*buffer)[j] /= (long double)samples;
-//		printf("buffer[%d]=%Lf\n", j, (*buffer)[j]);
-//	}
-//
-//	mpu_ctl_fifo_disable(dev);
-//	mpu_ctl_fifo_flush(dev);
-//	mpu_ctl_fifo_reset(dev);
-//	return 0;
-//
-//}
