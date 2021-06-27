@@ -3,6 +3,5 @@ all:
 
 .PHONY test: test.c
 	gcc -std=c11 -c matrix.c
-	gcc -std=c11 -c dev_mpu_mtx.c
-	gcc -std=c11 -c dev_mpu_mtx_pri.c
-	gcc -o test test.c dev_mpu_mtx.o 
+	gcc -std=c11 -c dev_mpu_mtx.c 
+	gcc -o test test.c dev_mpu_mtx.o -lm
