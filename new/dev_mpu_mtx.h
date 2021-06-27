@@ -7,7 +7,8 @@
 
 #ifndef MPU_MTX_H_
 #define MPU_MTX_H_
-
+#include <math.h>
+#include <tgmath.h>
 /*
  * MATRIX OPERATIONS
  * Conventions:
@@ -28,8 +29,21 @@
  * 	- only fails when there is a zero on the pivot
  * 	- returns 0 on success, -1 on failure
  *
+ * Rotation Matrices:
+ * 	- given angles unit must chosen to be RADS or DEGS
+ * 	- returned angles unit must chosen to be RADS or DEGS
+ * 	- Rotation Matrices are (4x4)
+ * 	- Euler angles are (3x1)[phi, theta, psi]
+ * 	- Quaterions are   (4x1)[q0, q1, q2, q3]
+ * 	- *A is always the source
+ * 	- *C is always the destination
+ * 	- no checks performed
+ *
  * mtx_zer		Matrix Zero
  * mtx_eye		Matrix Identity
+ * mtx_rox		4x4 X-axis rotation Matrix
+ * mtx_roy		4x4 Y-axis rotation Matrix
+ * mtx_roz		4x4 Z-axis rotation Matrix
  * mtx_cpy		Matrix Copy
  * mtx_trn		Matrix Transpose
  * mtx_det		Matrix Determinant
@@ -290,7 +304,6 @@
 	long double*	: mtxLf_col_div_scl	\
 	)((A), (n), (k), (l))
 
-#endif /* __STDC_VERSION__ */
 
 /* C(mxn) = 0 */
 void  mtxi_zer(const int m, const int n, int *C);
@@ -303,6 +316,7 @@ void  mtxi_eye(const int m, const int n, int *C);
 void  mtxf_eye(const int m, const int n, float *C);
 void mtxlf_eye(const int m, const int n, double *C);
 void mtxLf_eye(const int m, const int n, long double *C);
+
 
 /* C(mxn) = A(mxn) */
 void  mtxi_cpy(const int * const A, const int m, const int n, int *C);
@@ -460,6 +474,110 @@ void  mtxf_col_div_scl(float * A, const int m, const float k, int l);
 void mtxlf_col_div_scl(double * A, const int m, const double k, int l);
 void mtxLf_col_div_scl(long double * A, const int m, const long double k, int l);
 
+#define mtx_rox(q, C) \
+	_Generic((C),\
+	float*			:  mtxf_rox,\
+	double*			: mtxlf_rox,\
+	long double*		: mtxLf_rox\
+	)((q),(C))
+
+#define mtx_roy(q, C) \
+	_Generic((C),\
+	float*			:  mtxf_roy,\
+	double*			: mtxlf_roy,\
+	long double*		: mtxLf_roy\
+	)((q),(C))
+
+#define mtx_roz(q, C) \
+	_Generic((C),\
+	float*			:  mtxf_roz,\
+	double*			: mtxlf_roz,\
+	long double*		: mtxLf_roz\
+	)((q),(C))
+
+#define mtx_rot_xyz_etr(ade, A, C) \
+	_Generic((C),\
+	float*			:  mtxf_rot_xyz_etr,\
+	double*			: mtxlf_rot_xyz_etr,\
+	long double*		: mtxLf_rot_xyz_etr\
+	)((ade),(A),(C))
+
+#define mtx_rot_xyz_rte(ade, A, C) \
+	_Generic((C),\
+	float*			:  mtxf_rot_xyz_rte,\
+	double*			: mtxlf_rot_xyz_rte,\
+	long double*		: mtxLf_rot_xyz_rte\
+	)((ade),(A),(C))
+
+#define mtx_rot_xyz_etq(ade, A, C) \
+	_Generic((C),\
+	float*			:  mtxf_rot_xyz_etq,\
+	double*			: mtxlf_rot_xyz_etq,\
+	long double*		: mtxLf_rot_xyz_etq\
+	)((ade),(A),(C))
+
+#define mtx_rot_xyz_qte(ade, A, C) \
+	_Generic((C),\
+	float*			:  mtxf_rot_xyz_qte,\
+	double*			: mtxlf_rot_xyz_qte,\
+	long double*		: mtxLf_rot_xyz_qte\
+	)((ade),(A),(C))
+
+#define mtx_rot_xyz_cpm(A, C) \
+	_Generic((C),\
+	float*			:  mtxf_rot_xyz_cpm,\
+	double*			: mtxlf_rot_xyz_cpm,\
+	long double*		: mtxLf_rot_xyz_cpm\
+	)((A),(C))
+
+#define mtx_rot_xyz_cp2(A, C) \
+	_Generic((C),\
+	float*			:  mtxf_rot_xyz_cp2,\
+	double*			: mtxlf_rot_xyz_cp2,\
+	long double*		: mtxLf_rot_xyz_cp2\
+	)((A),(C))
+
+/* C(4x4) will be changed to a rotation matrix the respective axis */
+void  mtxf_rox(const float q, float *C);
+void  mtxf_roy(const float q, float *C);
+void  mtxf_roz(const float q, float *C);
+void mtxlf_rox(const double q, double *C);
+void mtxlf_roy(const double q, double *C);
+void mtxlf_roz(const double q, double *C);
+void mtxLf_rox(const long double q, long double *C);
+void mtxLf_roy(const long double q, long double *C);
+void mtxLf_roz(const long double q, long double *C);
+/* A(3x1) C(3x)	The cross product matrix C(w) */
+void  mtxf_rot_xyz_cpm(const float * const A,  float *C);
+void mtxlf_rot_xyz_cpm(const double * const  A, double *C);
+void mtxLf_rot_xyz_cpm(const long double * const A, long double *C);
+/* A(3x1) C(3x)	The cross product matrix squared C(w)2 */
+void  mtxf_rot_xyz_cp2(const float * const A,  float *C);
+void mtxlf_rot_xyz_cp2(const double * const  A, double *C);
+void mtxLf_rot_xyz_cp2(const long double * const A, long double *C);
+
+#define MTX_ROT_RAD 0
+#define MTX_ROT_DEG 1
+/* Conversions must be estecified whter to or from degrees */
+void  mtxf_rot_xyz_etr(const int ade, const float * const A,  float *C);
+void mtxlf_rot_xyz_etr(const int ade, const double * const  A, double *C);
+void mtxLf_rot_xyz_etr(const int ade, const long double * const A, long double *C);
+
+void  mtxf_rot_xyz_rte(const float * const A, const int cde, float *C);
+void mtxlf_rot_xyz_rte(const double * const  A, const int cde,double *C);
+void mtxLf_rot_xyz_rte(const long double * const A, const int cde,long double *C);
+
+void  mtxf_rot_xyz_etq(const int ade, const float * const A,  float *C);
+void mtxlf_rot_xyz_etq(const int ade, const double * const  A, double *C);
+void mtxLf_rot_xyz_etq(const int ade, const long double * const A, long double *C);
+
+void  mtxf_rot_xyz_qte(const float * const A, const int cde, float *C);
+void mtxlf_rot_xyz_qte(const double * const  A, const int cde,double *C);
+void mtxLf_rot_xyz_qte(const long double * const A, const int cde,long double *C);
+
+
+
+
 #define mtx_pri(A, m, n) \
 	_Generic((A),\
 	int*			:  mtxi_pri,\
@@ -573,6 +691,8 @@ void  mtxf_fpr_col(const float * const A, const int m, int k, FILE *f);
 void mtxlf_fpr_col(const double * const A, const int m, int k, FILE *f);
 void mtxLf_fpr_col(const long double * const A, const int m, int k, FILE *f);
 
+
+#endif /* MPU_MTX_H_ */
 
 #endif /* __STDC_VERSION__ >= 201112L */
 

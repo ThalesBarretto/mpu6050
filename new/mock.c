@@ -1,56 +1,15 @@
 #include "dev_mpu.h"
+#include "dev_mpu_flt.h"
 #include <assert.h>
+#include <inttypes.h>
 
 #define MDEBUG printf("%3d %-12s\n", __LINE__, __func__);
 
-struct mpu_flt_compl {
-	struct mpu_dev *dev;
-	long double gain;
-
-	/* angles taken from accelerometer */
-	long double AM_last;
-	long double GM_last;
-	long double xa_last;
-	long double ya_last;
-	long double za_last;
-	long double Rx_last;
-	long double Ry_last;
-	long double Rz_last;
-	long double Ro_last;
-	long double Gx_last;
-	long double Gy_last;
-	long double Gz_last;
-
-	/* previous values */
-	long double AM_prev;
-	long double GM_prev;
-	long double xa_prev;
-	long double ya_prev;
-	long double za_prev;
-	long double Gx_prev;
-	long double Gy_prev;
-	long double Gz_prev;
-	long double Rx_prev;
-	long double Ry_prev;
-	long double Rz_prev;
-	long double Rx_rate;
-	long double Ry_rate;
-	long double Rz_rate;
-
-	long double Rx_final;
-	long double Ry_final;
-	long double Rz_final;
-
-};
-
-int mpu_flt_compl_update(struct mpu_flt_compl *flt);
-int mpu_flt_compl_init(struct mpu_dev *dev, struct mpu_flt_compl **flt);
-void mpu_flt_compl_print_angle (struct mpu_flt_compl *flt);
-
 void mpu_print_data  (struct mpu_dev *dev, int times);
-void mpu_print_angle (struct mpu_flt_compl *flt);
 void mpu_print_all   (struct mpu_dev *dev);
 void mpu_print_bias  (struct mpu_dev *dev);
+void mpu_dev_parameters_dump(char *fn, struct mpu_dev *dev);
+void mpu_dev_parameters_restore(char *fn, struct mpu_dev *dev);
 
 int main(int argc, char *argv[])
 {
@@ -71,85 +30,40 @@ int main(int argc, char *argv[])
 //
 //	mpu_socket_makemsg(dev, msg,  buf);
 //	mpu_socket_sendmsg(&sfd, buf);
+	printf("The size of mpu6050:%d\n", sizeof(struct mpu6050));
 
 	struct mpu_dev *dev = NULL;
 	mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev);
 	assert(dev != NULL);
+	char *fn = "dev_mpu_parameters.log";
 
-	struct mpu_flt_compl *flt = NULL;
-	mpu_flt_compl_init(dev, &flt);
+	struct mpu_flt_dat *flt = NULL;
+	mpu_flt_com_init(dev, &flt);
 	assert(flt != NULL);
 
+
 	mpu_ctl_calibration(dev);	
+	//mpu_ctl_clocksource(dev, CLKSEL_1);	
 	mpu_ctl_dlpf(dev,5);
 	mpu_ctl_accel_range(dev, 2);
 	mpu_ctl_gyro_range(dev,250);
 
+	mpu_dev_parameters_dump(fn, dev);
+	//mpu_dev_parameters_restore(fn, dev);
 	while(1) {
 		mpu_ctl_fifo_data(dev);
 		mpu_ctl_fix_axis(dev);
-		printf("%12llu ", dev->samples);
-		mpu_flt_compl_update(flt);
-		mpu_print_all(dev);
-		mpu_flt_compl_print_angle(flt);
-		printf("\n");
+		mpu_flt_com_update(flt);
+		if ((dev->samples % 1) ==0) {
+			printf("%12llu ", dev->samples);
+			mpu_print_all(dev);
+			mpu_ang_pri(flt->anf);
+			printf("\n");
+		}
 	}
 
 	return 0;
 }
-
-int mpu_flt_compl_update(struct mpu_flt_compl *flt)
-{
-#define PI (3.1415926535897932384L)
-#define r2d (180.0L / PI) 
-	/* assume stationary device, angles relative to fixed reference frame */
-	flt->Rx_last =  -r2d * (atan2l((long double)*(flt->dev->Ay),-1.L * (long double)*(flt->dev->Az)));
-	flt->Ry_last =   r2d * (atan2l((long double)*(flt->dev->Ax),-1.L * (long double)*(flt->dev->Az)));
-	//flt->Gx_last = flt->dev->ang->Rx_earth + (*(flt->dev->Gx) * (1/(long double)flt->dev->sr));
-	//flt->Gy_last = flt->dev->ang->Ry_earth + (*(flt->dev->Gy) * (1/(long double)flt->dev->sr));
-	flt->Gx_last = flt->dev->ang->Rx_earth + (*(flt->dev->Gx) * flt->dev->st);
-	flt->Gy_last = flt->dev->ang->Ry_earth + (*(flt->dev->Gy) * flt->dev->st);
-	//flt->dev->ang->Rz_earth +=  ((long double)*(flt->dev->Gz) * (long double)flt->dev->st);
-	flt->dev->ang->Ro_earth =  r2d * (atan2l (sqrtl(*(flt->dev->Ax2) + *(flt->dev->Ay2)), -*(flt->dev->Az)));
-
-
-	flt->dev->ang->Rx_earth = ((1 - flt->gain) * flt->Rx_last) + (flt->gain * flt->Gx_last);
-	flt->dev->ang->Ry_earth = ((1 - flt->gain) * flt->Ry_last) + (flt->gain * flt->Gy_last);
-	//flt->Rz_final = ((1-flt->gain)*flt->Rz_last) + (flt->gain * (flt->Rz_final+(*(flt->dev->Gz) * flt->dev->st)));
-	return 0;
-
-#undef PI
-#undef r2d
-}
-
-int mpu_flt_compl_init(struct mpu_dev *dev, struct mpu_flt_compl **flt)
-{
-	*flt = (struct mpu_flt_compl *)calloc(1, sizeof(struct mpu_flt_compl));
-	assert(NULL != *flt);
-
-	(*flt)->dev = dev;
-	assert(NULL != (*flt)->dev);
-
-	(*flt)->gain = 0.8L;
-	(*flt)->Rx_last = 0;
-	(*flt)->Ry_last = 0;
-	(*flt)->Rz_last = 0;
-	(*flt)->Ro_last = 0;
-	(*flt)->Rx_prev = 0;
-	(*flt)->Ry_prev = 0;
-	(*flt)->Rz_prev = 0;
-	(*flt)->Rx_rate = 0;
-	(*flt)->Ry_rate = 0;
-	(*flt)->Rz_rate = 0;
-	(*flt)->Rx_final = 0;
-	(*flt)->Ry_final = 0;
-	(*flt)->Rz_final = 0;
-	(*flt)->Gx_prev = 0;
-	(*flt)->Gy_prev = 0;
-	(*flt)->Gz_prev = 0;
-	return 0;
-}
-
 void mpu_print_all(struct mpu_dev *dev)
 {
 	//printf("%3.0lf Hz ", dev->sr);
@@ -182,28 +96,6 @@ void mpu_print_data(struct mpu_dev *dev, int times)
 	}
 }
 
-void mpu_flt_compl_print_angle(struct mpu_flt_compl *flt)
-{
-//	printf("Rx_acc:%+.1Lf ", flt->Rx_acc);
-//	printf("Ry_acc:%+.1Lf ", flt->Ry_acc);
-//	printf("Gx_acc:%+.1Lf ", flt->Gx_acc);
-//	printf("Gy_acc:%+.1Lf ", flt->Gy_acc);
-//	printf("Gz_acc:%+.1Lf ", flt->Gz_acc);
-	printf("Rx:%+.2Lf ", flt->dev->ang->Rx_earth);
-	printf("Ry:%+.2Lf ", flt->dev->ang->Ry_earth);
-	printf("Ro:%+.2Lf ", flt->dev->ang->Ro_earth);
-	//printf("Rx:%+.1Lf ", flt->Rx_final_acc);
-	//printf("Ry:%+.1Lf ", flt->Ry_final_acc);
-
-//	printf("Rx_rate:%+.1Lf ", flt->Rx_rate);
-//	printf("Ry_rate:%+.1Lf ", flt->Ry_rate);
-//	printf("Gx_rate:%+.1lf ", *(flt->dev->Gx));
-//	printf("Gy_rate:%+.1lf ", *(flt->dev->Gy));
-//
-//	printf("Rx_final:%+.1Lf ", flt->Rx_final);
-//	printf("Ry_final:%+.1Lf ", flt->Ry_final);
-
-}
 
 void mpu_print_bias(struct mpu_dev *dev)
 {
@@ -237,5 +129,107 @@ void mpu_print_bias(struct mpu_dev *dev)
 	printf(" Gx_O=%Lf ", Gx_O);
 	printf(" Gy_O=%Lf ", Gy_O);
 	printf(" Gz_O=%Lf ", Gz_O);
+}
+void mpu_dev_parameters_dump(char *fn, struct mpu_dev *dev)
+{
+	FILE *dmp;
+	dmp = fopen(fn, "w+");
+	fprintf(dmp, "MPU6050\n");
+	fprintf(dmp, "%s %u\n"	,"PRODUCT_ID"		, dev->prod_id		);
+	fprintf(dmp, "%s %u\n"	,"CLOCK_SOURCE"		, dev->clksel		);
+	fprintf(dmp, "%s %u\n"	,"LOWPASS_FILTER"	, dev->dlpf		);
+	fprintf(dmp, "%s %lf\n"	,"SAMPLING_RATE"	, dev->sr		);
+	fprintf(dmp, "%s %lf\n"	,"ACCEL_FULL_RANGE"	, dev->afr		);
+	fprintf(dmp, "%s %lf\n"	,"GYRO_FULL_RANGE"	, dev->gfr		);
+	fprintf(dmp, "%s %d\n"	,"xa_cust"		, dev->cal->xa_cust	);
+	fprintf(dmp, "%s %d\n"	,"ya_cust"		, dev->cal->ya_cust	);
+	fprintf(dmp, "%s %d\n"	,"za_cust"		, dev->cal->za_cust	);
+	fprintf(dmp, "%s %d\n"	,"xg_cust"		, dev->cal->xg_cust	);
+	fprintf(dmp, "%s %d\n"	,"yg_cust"		, dev->cal->yg_cust	);
+	fprintf(dmp, "%s %d\n"	,"zg_cust"		, dev->cal->zg_cust	);
+	fprintf(dmp, "%s %Lf\n"	,"xa_bias"		, dev->cal->xa_bias	);
+	fprintf(dmp, "%s %Lf\n"	,"ya_bias"		, dev->cal->ya_bias	);
+	fprintf(dmp, "%s %Lf\n"	,"za_bias"		, dev->cal->za_bias	);
+	fprintf(dmp, "%s %Lf\n"	,"xg_bias"		, dev->cal->xg_bias	);
+	fprintf(dmp, "%s %Lf\n"	,"yg_bias"		, dev->cal->yg_bias	);
+	fprintf(dmp, "%s %Lf\n"	,"zg_bias"		, dev->cal->zg_bias	);
+	fprintf(dmp, "%s %Lf\n"	,"AM_bias"		, dev->cal->AM_bias	);
+	fprintf(dmp, "%s %Lf\n"	,"GM_bias"		, dev->cal->GM_bias	);
+
+	fclose(dmp);
+}
+
+void mpu_dev_parameters_restore(char *fn, struct mpu_dev *dev)
+{
+#define MPU_MAXLINE 1024 
+	FILE * fp;
+	if ( (fp = fopen(fn, "r")) == NULL) {
+		fprintf(stderr, "Unable to open file \"%s\"\n", fn);
+		exit(EXIT_FAILURE);
+	}
+
+	char *buf = (char *)calloc(MPU_MAXLINE, sizeof(char));
+
+	long loffset = 0L;
+	while (!(feof(fp) || ferror(fp))) {
+		fscanf(fp, "%s", buf);
+		if (strcmp(buf, "MPU6050") == 0) { break;}
+	}
+	if ((loffset = ftell(fp)) == -1L) {
+		fprintf(stderr, "Couldn't find line offset\n");
+	}
+
+	unsigned int prod_id;
+	unsigned int clksel;
+	unsigned int dlpf;
+	double sr;
+	double afr;
+	double gfr;
+	int xa_cust;
+	int ya_cust;
+	int za_cust;
+	int xg_cust;
+	int yg_cust;
+	int zg_cust;
+	struct mpu_cal *bkp = calloc(1, sizeof(struct mpu_cal));
+	do {
+	fscanf(fp, "%s", buf);
+	if (0 == strcmp(buf, "PRODUCT_ID"	)) { fscanf(fp, "%u",	&prod_id);	}
+	if (0 == strcmp(buf, "CLOCK_SOURCE"	)) { fscanf(fp, "%u",	&clksel);	}
+	if (0 == strcmp(buf, "LOWPASS_FILTER"	)) { fscanf(fp, "%u",	&dlpf);		}
+	if (0 == strcmp(buf, "SAMPLING_RATE"	)) { fscanf(fp, "%lf",	&sr);	 	}
+	if (0 == strcmp(buf, "ACCEL_FULL_RANGE"	)) { fscanf(fp, "%lf",	&afr);		}
+	if (0 == strcmp(buf, "GYRO_FULL_RANGE"	)) { fscanf(fp, "%lf",	&gfr);		}
+	if (0 == strcmp(buf, "xa_cust"		)) { fscanf(fp, "%d",	&xa_cust);	}
+	if (0 == strcmp(buf, "ya_cust"		)) { fscanf(fp, "%d",	&ya_cust);	}
+	if (0 == strcmp(buf, "za_cust"		)) { fscanf(fp, "%d",	&za_cust);	}
+	if (0 == strcmp(buf, "xg_cust"		)) { fscanf(fp, "%d",	&xg_cust);	}
+	if (0 == strcmp(buf, "yg_cust"		)) { fscanf(fp, "%d",	&yg_cust);	}
+	if (0 == strcmp(buf, "zg_cust"		)) { fscanf(fp, "%d",	&zg_cust);	}
+	if (0 == strcmp(buf, "xa_bias"		)) { fscanf(fp, "%Lf", 	&bkp->xa_bias);	}
+	if (0 == strcmp(buf, "ya_bias"		)) { fscanf(fp, "%Lf", 	&bkp->ya_bias);	}
+	if (0 == strcmp(buf, "za_bias"		)) { fscanf(fp, "%Lf", 	&bkp->za_bias);	}
+	if (0 == strcmp(buf, "xg_bias"		)) { fscanf(fp, "%Lf", 	&bkp->xg_bias);	}
+	if (0 == strcmp(buf, "yg_bias"		)) { fscanf(fp, "%Lf", 	&bkp->yg_bias);	}
+	if (0 == strcmp(buf, "zg_bias"		)) { fscanf(fp, "%Lf", 	&bkp->zg_bias);	}
+	if (0 == strcmp(buf, "AM_bias"		)) { fscanf(fp, "%Lf", 	&bkp->AM_bias);	}
+	if (0 == strcmp(buf, "GM_bias"		)) { fscanf(fp, "%Lf", 	&bkp->GM_bias);	}
+	} while (!(feof(fp) || ferror(fp)));
+	bkp->xa_cust = xa_cust;
+	bkp->ya_cust = ya_cust;
+	bkp->za_cust = za_cust;
+	bkp->xg_cust = xg_cust;
+	bkp->ya_cust = ya_cust;
+	bkp->zg_cust = zg_cust;
+
+
+	mpu_ctl_clocksource(dev, clksel);
+	mpu_ctl_dlpf(dev,dlpf);
+	mpu_ctl_samplerate(dev, sr);
+	mpu_ctl_accel_range(dev, afr);
+	mpu_ctl_gyro_range(dev, gfr);
+//	mpu_ctl_calibration_restore(dev, bkp);
+	fclose(fp);
+
 }
 

@@ -5,7 +5,7 @@ OBJS  = dev_mpu_comm	\
 	dev_mpu_mtx
 
 dev_mpu_mtx.o: dev_mpu_mtx.c
-	gcc -c dev_mpu_mtx.c -std=c11 -Wall
+	gcc -c dev_mpu_mtx.c -lm -std=c11 -Wall
 
 dev_mpu_conn.o: dev_mpu_conn.c
 	gcc -c dev_mpu_conn.c -li2c -Wall

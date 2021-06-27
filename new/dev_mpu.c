@@ -257,7 +257,6 @@ int mpu_destroy(struct mpu_dev * dev)
 	
 	mpu_dat_reset(dev);
 	
-	free(dev->ang); dev->ang = NULL;
 	free(dev->cal); dev->cal = NULL;
 	free(dev->dat); dev->dat = NULL;
 	free(dev->cfg); dev->cfg = NULL;
@@ -310,18 +309,17 @@ static int mpu_cfg_set_CLKSEL(struct mpu_dev * dev, mpu_reg_t clksel)
 
 	
 	switch(clksel) {
-		case CLKSEL_0: break; /* Internal 8 Mhz oscillator		*/
-		case CLKSEL_1: break; /* PLL with X axis gyroscope		*/
-		case CLKSEL_2: break; /* PLL with Y axis gyroscope		*/
-		case CLKSEL_3: break; /* PLL with Z axis gyroscope		*/
-		case CLKSEL_4: break; /* PLL with external 32.768 kHz reference	*/
-		case CLKSEL_5: break; /* PLL with external 19.2 MHz reference	*/
-		case CLKSEL_6: break; /* RESERVED */
-		case CLKSEL_7: break; /* Stops the clock, keeps timing in reset */
+		case CLKSEL_0 : dev->clksel = 0; break; /* Internal 8 Mhz oscillator		*/
+		case CLKSEL_1 : dev->clksel = 1; break; /* PLL with X axis gyroscope		*/
+		case CLKSEL_2 : dev->clksel = 2; break; /* PLL with Y axis gyroscope		*/
+		case CLKSEL_3 : dev->clksel = 3; break; /* PLL with Z axis gyroscope		*/
+		case CLKSEL_4 : dev->clksel = 4; break; /* PLL with external 32.768 kHz reference	*/
+		case CLKSEL_5 : dev->clksel = 5; break; /* PLL with external 19.2 MHz reference	*/
+		case CLKSEL_6 : dev->clksel = 6; break; /* RESERVED */
+		case CLKSEL_7 : dev->clksel = 7; break; /* Stops the clock, keeps timing in reset */
 		default: /* not supported */
 			return -1;
 	}
-	
 	
 	mpu_reg_t val;
 	if ((mpu_read_byte(dev, PWR_MGMT_1, &val)) < 0)
@@ -369,6 +367,8 @@ int mpu_ctl_dlpf(struct mpu_dev * dev, unsigned int dlpf)
 		return -1;
 	if ((mpu_dat_set(dev)) < 0)
 		return -1;
+
+	dev->dlpf = dlpf;
 
 	unsigned int new_rate_hz = dev->sr;
 	if (old_rate_hz != new_rate_hz) {
@@ -1300,13 +1300,9 @@ static int mpu_dev_allocate(struct mpu_dev **dev)
 	if (((*dev)->dat = (struct mpu_dat *)calloc(1, sizeof(struct mpu_dat))) == NULL)
 		goto exit_dev_dat;
 
-	if (((*dev)->ang = (struct mpu_ang *)calloc(1, sizeof(struct mpu_ang))) == NULL)
-		goto exit_dev_ang;
-	
 	return 0;
 
 	/* ensure pointers are NULL after free() */
-exit_dev_ang:	free((*dev)->ang); (*dev)->ang = NULL;
 exit_dev_dat:	free((*dev)->dat); (*dev)->dat = NULL;
 exit_dev_cal:	free((*dev)->cal); (*dev)->cal = NULL;
 exit_dev_cfg:	free((*dev)->cfg); (*dev)->cfg = NULL;
@@ -2042,10 +2038,10 @@ int mpu_ctl_calibration_reset(struct mpu_dev *dev)
 
 	mpu_read_data(dev, XA_OFFS_USRH, &dev->cal->xa_orig);
 	mpu_read_data(dev, YA_OFFS_USRH, &dev->cal->ya_orig);
+	mpu_read_data(dev, XG_OFFS_USRH, &dev->cal->xg_orig);
+	mpu_read_data(dev, YG_OFFS_USRH, &dev->cal->yg_orig);
+	mpu_read_data(dev, ZG_OFFS_USRH, &dev->cal->zg_orig);
 	mpu_read_data(dev, ZA_OFFS_USRH, &dev->cal->za_orig);
-	dev->cal->xg_orig = 0;
-	dev->cal->yg_orig = 0;
-	dev->cal->zg_orig = 0;
 	dev->cal->xa_cust = 0;
 	dev->cal->ya_cust = 0;
 	dev->cal->za_cust = 0;
@@ -2059,6 +2055,45 @@ int mpu_ctl_calibration_reset(struct mpu_dev *dev)
 	dev->cal->yg_bias = 0.0L;
 	dev->cal->zg_bias = 0.0L;
 	dev->cal->samples = 1000;
+
+	return 0;
+}
+
+int mpu_ctl_calibration_restore(struct mpu_dev *dev, struct mpu_cal *bkp)
+{
+	mpu_ctl_calibration_reset(dev); /* clear OFFS_USRH registers and calibration data */
+	dev->cal->xa_cust = bkp->xa_cust;
+	dev->cal->ya_cust = bkp->ya_cust;
+	dev->cal->za_cust = bkp->za_cust;
+
+	dev->cal->xg_cust = bkp->xa_cust;
+	dev->cal->yg_cust = bkp->ya_cust;
+	dev->cal->zg_cust = bkp->za_cust;
+
+	dev->cal->xa_bias = bkp->xa_bias;
+	dev->cal->ya_bias = bkp->ya_bias;
+	dev->cal->za_bias = bkp->za_bias;
+	dev->cal->xg_bias = bkp->xg_bias;
+	dev->cal->yg_bias = bkp->yg_bias;
+	dev->cal->zg_bias = bkp->zg_bias;
+	dev->cal->AM_bias = bkp->AM_bias;
+	dev->cal->GM_bias = bkp->GM_bias;
+
+	mpu_write_byte(dev, XA_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->xa_cust)>>8)&0xFF));
+	mpu_write_byte(dev, XA_OFFS_USRL,(uint8_t)((((uint16_t)dev->cal->xa_cust)    &0xFE) | (dev->cal->xa_orig & 0x1)));
+	mpu_write_byte(dev, YA_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->ya_cust)>>8)&0xFF));
+	mpu_write_byte(dev, YA_OFFS_USRL,(uint8_t)((((uint16_t)dev->cal->ya_cust)    &0xFE) | (dev->cal->ya_orig & 0x1)));
+	mpu_write_byte(dev, ZA_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->za_cust)>>8)&0xFF));
+	mpu_write_byte(dev, ZA_OFFS_USRL,(uint8_t)((((uint16_t)dev->cal->za_cust)    &0xFE) | (dev->cal->za_orig & 0x1)));
+
+	mpu_write_byte(dev, XG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->xg_cust)>>8)&0xFF));
+	mpu_write_byte(dev, XG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->xg_cust)&0xFF);
+	mpu_write_byte(dev, YG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->yg_cust)>>8)&0xFF));
+	mpu_write_byte(dev, YG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->yg_cust)&0xFF);
+	mpu_write_byte(dev, ZG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->zg_cust)>>8)&0xFF));
+	mpu_write_byte(dev, ZG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->zg_cust)&0xFF);
+
+	mpu_ctl_fifo_flush(dev);
 
 	return 0;
 }
@@ -2113,13 +2148,9 @@ int mpu_ctl_calibration(struct mpu_dev *dev)
 	mpu_write_byte(dev, ZA_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->za_cust)>>8)&0xFF));
 	mpu_write_byte(dev, ZA_OFFS_USRL,(uint8_t)((((uint16_t)dev->cal->za_cust)    &0xFE) | (dev->cal->za_orig & 0x1)));
 
-	//long double g_factor = (dev->glbs * 1.0L);
-	long double gx_factor = (dev->glbs * 1.00169161L);
-	long double gy_factor = (dev->glbs * 1.00063285L);
-	long double gz_factor = (dev->glbs * 1.00112551L);
-	dev->cal->xg_cust = (dev->cal->xg_orig - (int16_t)(xg_bias * gx_factor ));
-	dev->cal->yg_cust = (dev->cal->yg_orig - (int16_t)(yg_bias * gy_factor ));
-	dev->cal->zg_cust = (dev->cal->zg_orig - (int16_t)(zg_bias * gz_factor ));
+	dev->cal->xg_cust = (dev->cal->xg_orig - (int16_t)(xg_bias * dev->glbs));
+	dev->cal->yg_cust = (dev->cal->yg_orig - (int16_t)(yg_bias * dev->glbs));
+	dev->cal->zg_cust = (dev->cal->zg_orig - (int16_t)(zg_bias * dev->glbs));
 	mpu_write_byte(dev, XG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->xg_cust)>>8)&0xFF));
 	mpu_write_byte(dev, XG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->xg_cust)&0xFF);
 	mpu_write_byte(dev, YG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->yg_cust)>>8)&0xFF));
@@ -2127,35 +2158,56 @@ int mpu_ctl_calibration(struct mpu_dev *dev)
 	mpu_write_byte(dev, ZG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->zg_cust)>>8)&0xFF));
 	mpu_write_byte(dev, ZG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->zg_cust)&0xFF);
 
+	int pass = 0;
 	/* second pass - fine */
-	mpu_ctl_fifo_flush(dev);
-	xa_bias = 0;
-	ya_bias = 0;
-	za_bias = 0;
-	xg_bias = 0;
-	yg_bias = 0;
-	zg_bias = 0;
-	AM_bias = 0;
-	GM_bias = 0;
-	for (int i = 0; i <  dev->cal->samples; i++) {
-		mpu_ctl_fifo_data(dev);
-		xa_bias += *(dev->Ax);
-		ya_bias += *(dev->Ay);
-		za_bias += *(dev->Az);
-		xg_bias += *(dev->Gx);
-		yg_bias += *(dev->Gy);
-		zg_bias += *(dev->Gz);
-		AM_bias += *(dev->AM);
-	}
-	xa_bias /= dev->cal->samples;
-	ya_bias /= dev->cal->samples;
-	za_bias /= dev->cal->samples;
-	xg_bias /= dev->cal->samples;
-	yg_bias /= dev->cal->samples;
-	zg_bias /= dev->cal->samples;
-	AM_bias /= dev->cal->samples;
-	AM_bias -= 1;
-	za_bias -= 1;
+	do {
+		pass++;
+		mpu_ctl_fifo_flush(dev);
+		xa_bias = 0;
+		ya_bias = 0;
+		za_bias = 0;
+		xg_bias = 0;
+		yg_bias = 0;
+		zg_bias = 0;
+		AM_bias = 0;
+		GM_bias = 0;
+		/* store register values */
+		for (int i = 0; i <  dev->cal->samples; i++) {
+			mpu_ctl_fifo_data(dev);
+			xa_bias += *(dev->Ax);
+			ya_bias += *(dev->Ay);
+			za_bias += *(dev->Az);
+			xg_bias += *(dev->Gx);
+			yg_bias += *(dev->Gy);
+			zg_bias += *(dev->Gz);
+			AM_bias += *(dev->AM);
+		}
+		xa_bias /= dev->cal->samples;
+		ya_bias /= dev->cal->samples;
+		za_bias /= dev->cal->samples;
+		xg_bias /= dev->cal->samples;
+		yg_bias /= dev->cal->samples;
+		zg_bias /= dev->cal->samples;
+		AM_bias /= dev->cal->samples;
+		AM_bias -= 1;
+		za_bias -= 1;
+		printf("xg_bias (%Lf)..", xg_bias);
+		printf("yg_bias (%Lf)..", yg_bias);
+		printf("zg_bias (%Lf)..", zg_bias);
+		mpu_read_data(dev, XG_OFFS_USRH, &dev->cal->xg_orig);
+		mpu_read_data(dev, YG_OFFS_USRH, &dev->cal->yg_orig);
+		mpu_read_data(dev, ZG_OFFS_USRH, &dev->cal->zg_orig);
+		dev->cal->xg_cust = (dev->cal->xg_orig - (int16_t)(xg_bias * dev->glbs));
+		dev->cal->yg_cust = (dev->cal->yg_orig - (int16_t)(yg_bias * dev->glbs));
+		dev->cal->zg_cust = (dev->cal->zg_orig - (int16_t)(zg_bias * dev->glbs));
+		mpu_write_byte(dev, XG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->xg_cust)>>8)&0xFF));
+		mpu_write_byte(dev, XG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->xg_cust)&0xFF);
+		mpu_write_byte(dev, YG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->yg_cust)>>8)&0xFF));
+		mpu_write_byte(dev, YG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->yg_cust)&0xFF);
+		mpu_write_byte(dev, ZG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->zg_cust)>>8)&0xFF));
+		mpu_write_byte(dev, ZG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->zg_cust)&0xFF);
+		printf("\n");
+	} while ((pass < 3) && (fabsl(zg_bias) > (1.L/dev->glbs)));
 
 	dev->cal->xa_bias = xa_bias;
 	dev->cal->ya_bias = ya_bias;
