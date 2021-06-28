@@ -217,21 +217,24 @@ int mpu_init(	const char * const restrict path,
 	if ((mpu_dat_reset(dev)) < 0) /* clean data pointers */
 		goto mpu_init_error;
 
+	if ((mpu_cal_reset(dev)) < 0) /* assign unity gain, zero errors */
+		goto mpu_init_error;
 	
 	if ((mpu_cfg_reset(dev)) < 0) /* assign default config */
 		goto mpu_init_error;
 
-	
-	if ((mpu_cal_reset(dev)) < 0) /* assign unity gain, zero errors */
-		goto mpu_init_error;
+//	if ((mpu_cfg_set(dev)) < 0) /* assign default config */
+//		goto mpu_init_error;
 
-	
 	if ((mpu_dat_set(dev)) < 0) /* assign data pointers */
 		goto mpu_init_error;
 
 	if ((mpu_read_byte(dev, PROD_ID, &(dev->prod_id))) < 0) /* get product id */
 		goto mpu_init_error;
 	
+	if (mpu_ctl_fifo_flush(dev) < 0) /* DONT FORGET TO FLUSH FIFO */
+	       return -1;	
+
 	*mpudev = dev; /* success */
 	return 0;
 
@@ -610,6 +613,7 @@ static int mpu_cfg_write(struct mpu_dev * dev)
 	for (i = 0; i < len; i++) {
 		reg = dev->cfg->cfg[i][0];
 		val = dev->cfg->cfg[i][1];
+		printf("cfg_write: %s : %"PRIx8"\n", mpu_regnames[reg], val);
 		
 		if ((mpu_write_byte(dev, reg, val)) < 0) /* write error */
 			return -1;
@@ -692,7 +696,7 @@ static int mpu_cfg_set_val(struct mpu_dev * dev, const mpu_reg_t reg, const mpu_
 		
 		if(reg == dev->cfg->cfg[i][0]) { /* seek register */
 			dev->cfg->cfg[i][1] = val;
-			
+			printf("%s: %s : %"PRIx8"\n", __func__, mpu_regnames[reg], val);
 			return 0;
 		}
 	}

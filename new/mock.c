@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 //
 //	mpu_socket_makemsg(dev, msg,  buf);
 //	mpu_socket_sendmsg(&sfd, buf);
-	printf("The size of mpu6050:%d\n", sizeof(struct mpu6050));
+//	printf("The size of mpu6050:%d\n", sizeof(struct mpu6050));
 
 	struct mpu_dev *dev = NULL;
 	mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev);
@@ -42,11 +42,11 @@ int main(int argc, char *argv[])
 	assert(flt != NULL);
 
 
-	mpu_ctl_calibration(dev);	
+//	mpu_ctl_calibration(dev);	
 	//mpu_ctl_clocksource(dev, CLKSEL_1);	
-	mpu_ctl_dlpf(dev,5);
-	mpu_ctl_accel_range(dev, 2);
-	mpu_ctl_gyro_range(dev,250);
+//	mpu_ctl_dlpf(dev,5);
+//	mpu_ctl_accel_range(dev, 2);
+//	mpu_ctl_gyro_range(dev,250);
 
 	mpu_dev_parameters_dump(fn, dev);
 	//mpu_dev_parameters_restore(fn, dev);
