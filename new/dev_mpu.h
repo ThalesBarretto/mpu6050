@@ -857,9 +857,13 @@ struct mpu_cfg {
  * 	On success, return 0.
  * 	On failure, return -1;
  */
-int mpu_init(	const char * path,
+#define MPU_MODE_RESET 0
+#define MPU_MODE_RESTORE 1
+
+int mpu_init(	const char * const restrict path,
 		const uint8_t address,
-		struct mpu_dev **mpudev);
+		struct mpu_dev **mpudev,
+		const int mode);
 
 int mpu_destroy(struct mpu_dev * mpudev);
 
@@ -873,7 +877,7 @@ int mpu_ctl_calibration_restore(struct mpu_dev *dev, struct mpu_cal *bkp);
 int mpu_ctl_bias_set  (struct mpu_dev *dev);
 int mpu_ctl_bias_print(struct mpu_dev *dev);
 
-int mpu_ctl_selftest		  (struct mpu_dev *dev);
+int mpu_ctl_selftest		  (struct mpu_dev *dev, char *fname);
 int mpu_ctl_selftest_enable_accel (struct mpu_dev *dev);
 int mpu_ctl_selftest_enable_gyro  (struct mpu_dev *dev);
 int mpu_ctl_selftest_disable_accel(struct mpu_dev *dev);
@@ -937,6 +941,9 @@ int mpu_write_byte(struct mpu_dev * const dev,
 int mpu_write_word(struct mpu_dev * const dev,
 		const mpu_reg_t reg, 		/* device register */
 		const mpu_word_t val);		/* value to write */
+
+void mpu_dev_parameters_dump(char *fn, struct mpu_dev *dev);
+void mpu_dev_parameters_restore(char *fn, struct mpu_dev *dev);
 
 #define MPU_SOCK_BUFFSIZ 500
 int mpu_socket_connect(int *sfd, char *host, char *port);

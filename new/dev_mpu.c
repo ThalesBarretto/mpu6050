@@ -140,6 +140,7 @@ static int mpu_dev_allocate(struct mpu_dev **dev);
 static int mpu_cfg_set(struct mpu_dev * dev);
 static int mpu_dat_set(struct mpu_dev * dev);
 
+static int mpu_cfg_restore(struct mpu_dev * dev);
 static int mpu_cfg_reset(struct mpu_dev * dev);
 static int mpu_dat_reset(struct mpu_dev * dev);
 static int mpu_cal_reset(struct mpu_dev * dev);
@@ -185,7 +186,8 @@ static int mpu_fifo_data(struct mpu_dev *dev, int16_t *data);
  */
 int mpu_init(	const char * const restrict path,
 		const mpu_reg_t address,
-		struct mpu_dev ** mpudev)
+		struct mpu_dev ** mpudev,
+		const int mode)
 {
 	
 	if (*mpudev != NULL) /* device not empty */
@@ -219,12 +221,25 @@ int mpu_init(	const char * const restrict path,
 
 	if ((mpu_cal_reset(dev)) < 0) /* assign unity gain, zero errors */
 		goto mpu_init_error;
-	
-	if ((mpu_cfg_reset(dev)) < 0) /* assign default config */
-		goto mpu_init_error;
 
-//	if ((mpu_cfg_set(dev)) < 0) /* assign default config */
-//		goto mpu_init_error;
+	switch (mode) {	
+		case MPU_MODE_RESET:
+			if ((mpu_cfg_reset(dev)) < 0) /* assign default config */
+				goto mpu_init_error;
+			break;
+
+		case MPU_MODE_RESTORE:
+			if ((mpu_cfg_restore (dev)) < 0) /* read config from device */
+				goto mpu_init_error;
+			break;
+		default:
+			fprintf(stderr, "mode unrecognized\n");
+			goto mpu_init_error;
+	} 
+
+
+	if ((mpu_cfg_set(dev)) < 0) /* assign default config */
+		goto mpu_init_error;
 
 	if ((mpu_dat_set(dev)) < 0) /* assign data pointers */
 		goto mpu_init_error;
@@ -251,6 +266,31 @@ mpu_init_error:
 
 	return -1;
 };
+
+
+static int mpu_cfg_restore(struct mpu_dev * dev)
+{
+	if ((NULL == dev) || (NULL == dev->cfg)) 
+		return -1;
+
+	memcpy((void *)dev->cfg, (void *)&mpu6050_defcfg, sizeof(struct mpu_cfg));
+
+	unsigned int i = 1;
+	unsigned int len = sizeof(dev->cfg->cfg)/sizeof(dev->cfg->cfg[0]);
+	
+	for (i = 0; i < len; i++) {
+
+		if (0 == dev->cfg->cfg[i][0]) /* invalid register */
+			continue;
+
+		if ((mpu_read_byte(dev, dev->cfg->cfg[i][0], &dev->cfg->cfg[i][1])) < 0) /* read error */
+			return -1;
+
+	}
+	
+	return 0;
+}
+
 
 int mpu_destroy(struct mpu_dev * dev)
 {
@@ -613,7 +653,6 @@ static int mpu_cfg_write(struct mpu_dev * dev)
 	for (i = 0; i < len; i++) {
 		reg = dev->cfg->cfg[i][0];
 		val = dev->cfg->cfg[i][1];
-		printf("cfg_write: %s : %"PRIx8"\n", mpu_regnames[reg], val);
 		
 		if ((mpu_write_byte(dev, reg, val)) < 0) /* write error */
 			return -1;
@@ -696,7 +735,6 @@ static int mpu_cfg_set_val(struct mpu_dev * dev, const mpu_reg_t reg, const mpu_
 		
 		if(reg == dev->cfg->cfg[i][0]) { /* seek register */
 			dev->cfg->cfg[i][1] = val;
-			printf("%s: %s : %"PRIx8"\n", __func__, mpu_regnames[reg], val);
 			return 0;
 		}
 	}
@@ -775,7 +813,6 @@ static int mpu_cfg_parse_USER_CTRL(struct mpu_dev * dev)
 		//printf("SIG_COND_RESET_BIT set\n");
 		return -1;
 	}
-
 
 	if(val & I2C_IF_DIS_BIT) /* this is valid but will disable i2c communication */
 		return -1;
@@ -884,7 +921,6 @@ static int mpu_cfg_parse_GYRO_CONFIG(struct mpu_dev * dev)
 	
 			return -1; /* invalid value */
 	}
-
 	
 	return 0;
 }
@@ -941,7 +977,6 @@ static int mpu_cfg_parse_CONFIG(struct mpu_dev * dev)
 	
 			return -1; /* error: invalid value */
 	}
-
 	
 	return 0;
 }
@@ -1595,7 +1630,7 @@ int mpu_read_data(struct mpu_dev * const dev, const mpu_reg_t reg, int16_t * val
 	return 0;
 }
 
-int mpu_ctl_selftest(struct mpu_dev * dev)
+int mpu_ctl_selftest(struct mpu_dev * dev, char *fname)
 {
 	/* prepare the device for self-test */
 	struct mpu_cfg *cfg_old = calloc(1, sizeof(struct mpu_cfg));
@@ -1697,12 +1732,19 @@ int mpu_ctl_selftest(struct mpu_dev * dev)
 	long double shift_xg = (xg_str - ft_xg)/ft_xg;
 	long double shift_yg = (yg_str - ft_yg)/ft_yg;
 	long double shift_zg = (zg_str - ft_zg)/ft_zg;
-	printf("Self-test results: Xa = %Lf%% shift from factory trim (%4s)\n", fabsl(shift_xa), fabsl(shift_xa) < 14.0L ? "PASS" : "FAIL");
-	printf("Self-test resutls: Ya = %Lf%% shift from factory trim (%4s)\n", fabsl(shift_ya), fabsl(shift_ya) < 14.0L ? "PASS" : "FAIL");
-	printf("Self-test resutls: Za = %Lf%% shift from factory trim (%4s)\n", fabsl(shift_za), fabsl(shift_za) < 14.0L ? "PASS" : "FAIL");
-	printf("Self-test resutls: Xg = %Lf%% shift from factory trim (%4s)\n", fabsl(shift_xg), fabsl(shift_xg) < 14.0L ? "PASS" : "FAIL");
-	printf("Self-test resutls: Yg = %Lf%% shift from factory trim (%4s)\n", fabsl(shift_yg), fabsl(shift_yg) < 14.0L ? "PASS" : "FAIL");
-	printf("Self-test resutls: Zg = %Lf%% shift from factory trim (%4s)\n", fabsl(shift_zg), fabsl(shift_zg) < 14.0L ? "PASS" : "FAIL");
+
+	FILE *fp;
+	if ((fp = fopen(fname, "w+")) == NULL) {
+		fprintf(stderr, "Couldn't open \"%s\" for self-test results! - logging to stderr.\n", fname);
+		fp = stderr;
+	} else {
+		fprintf(fp, "Self-test results: Xa = %Lf%% shift from factory trim (%4s)\n", fabsl(shift_xa), fabsl(shift_xa) < 14.0L ? "PASS" : "FAIL");
+		fprintf(fp, "Self-test resutls: Ya = %Lf%% shift from factory trim (%4s)\n", fabsl(shift_ya), fabsl(shift_ya) < 14.0L ? "PASS" : "FAIL");
+		fprintf(fp, "Self-test resutls: Za = %Lf%% shift from factory trim (%4s)\n", fabsl(shift_za), fabsl(shift_za) < 14.0L ? "PASS" : "FAIL");
+		fprintf(fp, "Self-test resutls: Xg = %Lf%% shift from factory trim (%4s)\n", fabsl(shift_xg), fabsl(shift_xg) < 14.0L ? "PASS" : "FAIL");
+		fprintf(fp, "Self-test resutls: Yg = %Lf%% shift from factory trim (%4s)\n", fabsl(shift_yg), fabsl(shift_yg) < 14.0L ? "PASS" : "FAIL");
+		fprintf(fp, "Self-test resutls: Zg = %Lf%% shift from factory trim (%4s)\n", fabsl(shift_zg), fabsl(shift_zg) < 14.0L ? "PASS" : "FAIL");
+	};
 
 	/* restore old config */
 	memcpy((void *)dev->cfg, (void *)cfg_old, sizeof(struct mpu_cfg));
@@ -2083,19 +2125,19 @@ int mpu_ctl_calibration_restore(struct mpu_dev *dev, struct mpu_cal *bkp)
 	dev->cal->AM_bias = bkp->AM_bias;
 	dev->cal->GM_bias = bkp->GM_bias;
 
-	mpu_write_byte(dev, XA_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->xa_cust)>>8)&0xFF));
-	mpu_write_byte(dev, XA_OFFS_USRL,(uint8_t)((((uint16_t)dev->cal->xa_cust)    &0xFE) | (dev->cal->xa_orig & 0x1)));
-	mpu_write_byte(dev, YA_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->ya_cust)>>8)&0xFF));
-	mpu_write_byte(dev, YA_OFFS_USRL,(uint8_t)((((uint16_t)dev->cal->ya_cust)    &0xFE) | (dev->cal->ya_orig & 0x1)));
-	mpu_write_byte(dev, ZA_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->za_cust)>>8)&0xFF));
-	mpu_write_byte(dev, ZA_OFFS_USRL,(uint8_t)((((uint16_t)dev->cal->za_cust)    &0xFE) | (dev->cal->za_orig & 0x1)));
+	//mpu_write_byte(dev, XA_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->xa_cust)>>8)&0xFF));
+	//mpu_write_byte(dev, XA_OFFS_USRL,(uint8_t)((((uint16_t)dev->cal->xa_cust)    &0xFE) | (dev->cal->xa_orig & 0x1)));
+	//mpu_write_byte(dev, YA_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->ya_cust)>>8)&0xFF));
+	//mpu_write_byte(dev, YA_OFFS_USRL,(uint8_t)((((uint16_t)dev->cal->ya_cust)    &0xFE) | (dev->cal->ya_orig & 0x1)));
+	//mpu_write_byte(dev, ZA_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->za_cust)>>8)&0xFF));
+	//mpu_write_byte(dev, ZA_OFFS_USRL,(uint8_t)((((uint16_t)dev->cal->za_cust)    &0xFE) | (dev->cal->za_orig & 0x1)));
 
-	mpu_write_byte(dev, XG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->xg_cust)>>8)&0xFF));
-	mpu_write_byte(dev, XG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->xg_cust)&0xFF);
-	mpu_write_byte(dev, YG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->yg_cust)>>8)&0xFF));
-	mpu_write_byte(dev, YG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->yg_cust)&0xFF);
-	mpu_write_byte(dev, ZG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->zg_cust)>>8)&0xFF));
-	mpu_write_byte(dev, ZG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->zg_cust)&0xFF);
+	//mpu_write_byte(dev, XG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->xg_cust)>>8)&0xFF));
+	//mpu_write_byte(dev, XG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->xg_cust)&0xFF);
+	//mpu_write_byte(dev, YG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->yg_cust)>>8)&0xFF));
+	//mpu_write_byte(dev, YG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->yg_cust)&0xFF);
+	//mpu_write_byte(dev, ZG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->zg_cust)>>8)&0xFF));
+	//mpu_write_byte(dev, ZG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->zg_cust)&0xFF);
 
 	mpu_ctl_fifo_flush(dev);
 
@@ -2243,3 +2285,125 @@ void mpu_ctl_fix_axis(struct mpu_dev *dev)
 		*(dev->Az) *= -1.0L;
 	}
 }
+
+void mpu_dev_parameters_dump(char *fn, struct mpu_dev *dev)
+{
+	FILE *dmp;
+	dmp = fopen(fn, "w+");
+	fprintf(dmp, "MPU6050\n");
+	fprintf(dmp, "%s %u\n"		,"PRODUCT_ID"		, dev->prod_id		);
+	fprintf(dmp, "%s %u\n"		,"CLOCK_SOURCE"		, dev->clksel		);
+	fprintf(dmp, "%s %u\n"		,"LOWPASS_FILTER"	, dev->dlpf		);
+	fprintf(dmp, "%s %.16lf\n"	,"SAMPLING_RATE"	, dev->sr		);
+	fprintf(dmp, "%s %.16lf\n"	,"ACCEL_FULL_RANGE"	, dev->afr		);
+	fprintf(dmp, "%s %.16lf\n"	,"GYRO_FULL_RANGE"	, dev->gfr		);
+	fprintf(dmp, "%s %d\n"		,"xa_cust"		, dev->cal->xa_cust	);
+	fprintf(dmp, "%s %d\n"		,"ya_cust"		, dev->cal->ya_cust	);
+	fprintf(dmp, "%s %d\n"		,"za_cust"		, dev->cal->za_cust	);
+	fprintf(dmp, "%s %d\n"		,"xg_cust"		, dev->cal->xg_cust	);
+	fprintf(dmp, "%s %d\n"		,"yg_cust"		, dev->cal->yg_cust	);
+	fprintf(dmp, "%s %d\n"		,"zg_cust"		, dev->cal->zg_cust	);
+	fprintf(dmp, "%s %.16Lf\n"	,"xa_bias"		, dev->cal->xa_bias	);
+	fprintf(dmp, "%s %.16Lf\n"	,"ya_bias"		, dev->cal->ya_bias	);
+	fprintf(dmp, "%s %.16Lf\n"	,"za_bias"		, dev->cal->za_bias	);
+	fprintf(dmp, "%s %.16Lf\n"	,"xg_bias"		, dev->cal->xg_bias	);
+	fprintf(dmp, "%s %.16Lf\n"	,"yg_bias"		, dev->cal->yg_bias	);
+	fprintf(dmp, "%s %.16Lf\n"	,"zg_bias"		, dev->cal->zg_bias	);
+	fprintf(dmp, "%s %.16Lf\n"	,"AM_bias"		, dev->cal->AM_bias	);
+	fprintf(dmp, "%s %.16Lf\n"	,"GM_bias"		, dev->cal->GM_bias	);
+
+	fclose(dmp);
+}
+
+void mpu_dev_parameters_restore(char *fn, struct mpu_dev *dev)
+{
+#define MPU_MAXLINE 1024 
+	FILE * fp;
+	if ( (fp = fopen(fn, "r")) == NULL) {
+		fprintf(stderr, "Unable to open file \"%s\"\n", fn);
+		exit(EXIT_FAILURE);
+	}
+
+	char *buf = (char *)calloc(MPU_MAXLINE, sizeof(char));
+
+	long loffset = 0L;
+	while (!(feof(fp) || ferror(fp))) {
+		fscanf(fp, "%s", buf);
+		if (strcmp(buf, "MPU6050") == 0) { break;}
+	}
+	if ((loffset = ftell(fp)) == -1L) {
+		fprintf(stderr, "Couldn't find line offset\n");
+	}
+
+	unsigned int prod_id;
+	unsigned int clksel;
+	unsigned int dlpf;
+	double sr;
+	double afr;
+	double gfr;
+	int xa_cust;
+	int ya_cust;
+	int za_cust;
+	int xg_cust;
+	int yg_cust;
+	int zg_cust;
+	struct mpu_cal *bkp = calloc(1, sizeof(struct mpu_cal));
+	do {
+	fscanf(fp, "%s", buf);
+	if (0 == strcmp(buf, "PRODUCT_ID"	)) { fscanf(fp, "%u",	&prod_id);	}
+	if (0 == strcmp(buf, "CLOCK_SOURCE"	)) { fscanf(fp, "%u",	&clksel);	}
+	if (0 == strcmp(buf, "LOWPASS_FILTER"	)) { fscanf(fp, "%u",	&dlpf);		}
+	if (0 == strcmp(buf, "SAMPLING_RATE"	)) { fscanf(fp, "%lf",	&sr);	 	}
+	if (0 == strcmp(buf, "ACCEL_FULL_RANGE"	)) { fscanf(fp, "%lf",	&afr);		}
+	if (0 == strcmp(buf, "GYRO_FULL_RANGE"	)) { fscanf(fp, "%lf",	&gfr);		}
+	if (0 == strcmp(buf, "xa_cust"		)) { fscanf(fp, "%d",	&xa_cust);	}
+	if (0 == strcmp(buf, "ya_cust"		)) { fscanf(fp, "%d",	&ya_cust);	}
+	if (0 == strcmp(buf, "za_cust"		)) { fscanf(fp, "%d",	&za_cust);	}
+	if (0 == strcmp(buf, "xg_cust"		)) { fscanf(fp, "%d",	&xg_cust);	}
+	if (0 == strcmp(buf, "yg_cust"		)) { fscanf(fp, "%d",	&yg_cust);	}
+	if (0 == strcmp(buf, "zg_cust"		)) { fscanf(fp, "%d",	&zg_cust);	}
+	if (0 == strcmp(buf, "xa_bias"		)) { fscanf(fp, "%Lf", 	&bkp->xa_bias);	}
+	if (0 == strcmp(buf, "ya_bias"		)) { fscanf(fp, "%Lf", 	&bkp->ya_bias);	}
+	if (0 == strcmp(buf, "za_bias"		)) { fscanf(fp, "%Lf", 	&bkp->za_bias);	}
+	if (0 == strcmp(buf, "xg_bias"		)) { fscanf(fp, "%Lf", 	&bkp->xg_bias);	}
+	if (0 == strcmp(buf, "yg_bias"		)) { fscanf(fp, "%Lf", 	&bkp->yg_bias);	}
+	if (0 == strcmp(buf, "zg_bias"		)) { fscanf(fp, "%Lf", 	&bkp->zg_bias);	}
+	if (0 == strcmp(buf, "AM_bias"		)) { fscanf(fp, "%Lf", 	&bkp->AM_bias);	}
+	if (0 == strcmp(buf, "GM_bias"		)) { fscanf(fp, "%Lf", 	&bkp->GM_bias);	}
+	} while (!(feof(fp) || ferror(fp)));
+
+
+	mpu_ctl_clocksource(dev, clksel);
+	mpu_ctl_dlpf(dev,dlpf);
+	mpu_ctl_samplerate(dev, sr);
+	mpu_ctl_accel_range(dev, afr);
+	mpu_ctl_gyro_range(dev, gfr);
+	mpu_ctl_calibration_reset(dev);
+	mpu_ctl_calibration_restore(dev, bkp);
+	fprintf(stdout, "MPU6050\n");
+	fprintf(stdout, "%s %u\n"	,"PRODUCT_ID"		, dev->prod_id		);
+	fprintf(stdout, "%s %u\n"	,"CLOCK_SOURCE"		, dev->clksel		);
+	fprintf(stdout, "%s %u\n"	,"LOWPASS_FILTER"	, dev->dlpf		);
+	fprintf(stdout, "%s %.16lf\n"	,"SAMPLING_RATE"	, dev->sr		);
+	fprintf(stdout, "%s %.16lf\n"	,"ACCEL_FULL_RANGE"	, dev->afr		);
+	fprintf(stdout, "%s %.16lf\n"	,"GYRO_FULL_RANGE"	, dev->gfr		);
+	fprintf(stdout, "%s %d\n"	,"xa_cust"		, dev->cal->xa_cust	);
+	fprintf(stdout, "%s %d\n"	,"ya_cust"		, dev->cal->ya_cust	);
+	fprintf(stdout, "%s %d\n"	,"za_cust"		, dev->cal->za_cust	);
+	fprintf(stdout, "%s %d\n"	,"xg_cust"		, dev->cal->xg_cust	);
+	fprintf(stdout, "%s %d\n"	,"yg_cust"		, dev->cal->yg_cust	);
+	fprintf(stdout, "%s %d\n"	,"zg_cust"		, dev->cal->zg_cust	);
+	fprintf(stdout, "%s %.16Lf\n"	,"xa_bias"		, dev->cal->xa_bias	);
+	fprintf(stdout, "%s %.16Lf\n"	,"ya_bias"		, dev->cal->ya_bias	);
+	fprintf(stdout, "%s %.16Lf\n"	,"za_bias"		, dev->cal->za_bias	);
+	fprintf(stdout, "%s %.16Lf\n"	,"xg_bias"		, dev->cal->xg_bias	);
+	fprintf(stdout, "%s %.16Lf\n"	,"yg_bias"		, dev->cal->yg_bias	);
+	fprintf(stdout, "%s %.16Lf\n"	,"zg_bias"		, dev->cal->zg_bias	);
+	fprintf(stdout, "%s %.16Lf\n"	,"AM_bias"		, dev->cal->AM_bias	);
+	fprintf(stdout, "%s %.16Lf\n"	,"GM_bias"		, dev->cal->GM_bias	);
+	mpu_ctl_fifo_flush(dev);
+	fclose(fp);
+
+
+}
+
