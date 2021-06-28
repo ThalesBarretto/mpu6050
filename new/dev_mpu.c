@@ -1477,24 +1477,14 @@ int mpu_ctl_fifo_data(struct mpu_dev *dev)
 		return 0;
 	}
 
-
-	int count = 0;
-	if ((mpu_ctl_fifo_count(dev, &count)) < 0)
+	if ((mpu_ctl_fifo_count(dev)) < 0)
 		return -1;
 
-//	if (dev->fifocnt > dev->fifomax) { /* buffer overflow */
-//		mpu_ctl_fifo_flush(dev);
-//	} else {
-//		while (dev->fifocnt < len) { /* buffer underflow */
-//			mpu_ctl_fifo_count(dev, &count);
-//		}
-//	}
-	//if (count > 1023) { /* buffer overflow */
 	if (dev->fifocnt > dev->fifomax) { /* buffer overflow */
 		mpu_ctl_fifo_flush(dev);
 	} else {
-		while (count < len) { /* buffer underflow */
-			mpu_ctl_fifo_count(dev, &count);
+		while (dev->fifocnt < len) { /* buffer underflow */
+			mpu_ctl_fifo_count(dev);
 		}
 	}
 
@@ -1530,22 +1520,7 @@ int mpu_ctl_fifo_data(struct mpu_dev *dev)
 	return 0;
 }
 
-//int mpu_ctl_fifo_count(struct mpu_dev *dev, int *count)
-//{
-//	if (MPUDEV_IS_NULL(dev))
-//		return -1;
-//
-//	uint16_t tem = 0;
-//	if ((mpu_read_word(dev, FIFO_COUNT_H, &tem)) < 0)
-//		return -1;
-//
-//	uint16_t buf = (tem << 8) | (tem >> 8);
-//	dev->fifocnt = buf;
-//
-//	return 0;
-//}
-
-int mpu_ctl_fifo_count(struct mpu_dev *dev, int *count)
+int mpu_ctl_fifo_count(struct mpu_dev *dev)
 {
 	if (MPUDEV_IS_NULL(dev))
 		return -1;
@@ -1555,26 +1530,10 @@ int mpu_ctl_fifo_count(struct mpu_dev *dev, int *count)
 		return -1;
 
 	uint16_t buf = (tem << 8) | (tem >> 8);
-	*count = buf;
+	dev->fifocnt = buf;
 
 	return 0;
 }
-
-//int mpu_ctl_fifo_flush(struct mpu_dev *dev)
-//{
-//	if (MPUDEV_IS_NULL(dev))
-//		return -1;
-//
-//	uint8_t dat = 0;
-//      mpu_ctl_fifo_count(dev);
-//	for (int i = 0; i < dev->fifocnt; i++) {
-//		if ((mpu_read_byte(dev, FIFO_R_W, &dat)) < 0)
-//			return -1;
-//	}
-//	dev->samples = 0;
-//
-//	return 0;
-//}
 
 int mpu_ctl_fifo_flush(struct mpu_dev *dev)
 {
@@ -1582,9 +1541,8 @@ int mpu_ctl_fifo_flush(struct mpu_dev *dev)
 		return -1;
 
 	uint8_t dat = 0;
-	int count = 0;
-       	mpu_ctl_fifo_count(dev, &count);
-	for (int i = 0; i < count; i++) {
+       	mpu_ctl_fifo_count(dev);
+	for (int i = 0; i < dev->fifocnt; i++) {
 		if ((mpu_read_byte(dev, FIFO_R_W, &dat)) < 0)
 			return -1;
 	}
@@ -1820,7 +1778,6 @@ int mpu_ctl_fifo_enable(struct mpu_dev *dev)
 		return -1;
 	if (mpu_dat_set(dev) < 0)
 		return -1;
-
 
 	return 0;
 }
@@ -2311,7 +2268,6 @@ void mpu_dev_parameters_dump(char *fn, struct mpu_dev *dev)
 	fprintf(dmp, "%s %.16Lf\n"	,"zg_bias"		, dev->cal->zg_bias	);
 	fprintf(dmp, "%s %.16Lf\n"	,"AM_bias"		, dev->cal->AM_bias	);
 	fprintf(dmp, "%s %.16Lf\n"	,"GM_bias"		, dev->cal->GM_bias	);
-
 	fclose(dmp);
 }
 
@@ -2403,7 +2359,5 @@ void mpu_dev_parameters_restore(char *fn, struct mpu_dev *dev)
 	fprintf(stdout, "%s %.16Lf\n"	,"GM_bias"		, dev->cal->GM_bias	);
 	mpu_ctl_fifo_flush(dev);
 	fclose(fp);
-
-
 }
 

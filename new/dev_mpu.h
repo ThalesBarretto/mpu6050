@@ -891,7 +891,7 @@ int mpu_ctl_fifo_disable	(struct mpu_dev *dev);
 int mpu_ctl_fifo_disable_accel	(struct mpu_dev *dev);
 int mpu_ctl_fifo_disable_gyro	(struct mpu_dev *dev);
 int mpu_ctl_fifo_disable_temp	(struct mpu_dev *dev);
-int mpu_ctl_fifo_count		(struct mpu_dev *dev, int *count);
+int mpu_ctl_fifo_count		(struct mpu_dev *dev);
 int mpu_ctl_fifo_data		(struct mpu_dev *dev);
 int mpu_ctl_fifo_flush		(struct mpu_dev *dev);
 int mpu_ctl_fifo_reset		(struct mpu_dev *dev);
