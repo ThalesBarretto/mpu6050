@@ -942,14 +942,13 @@ int mpu_write_word(struct mpu_dev * const dev,
 		const mpu_reg_t reg, 		/* device register */
 		const mpu_word_t val);		/* value to write */
 
-void mpu_dev_parameters_dump(char *fn, struct mpu_dev *dev);
-void mpu_dev_parameters_restore(char *fn, struct mpu_dev *dev);
-
 #define MPU_SOCK_BUFFSIZ 500
 int mpu_socket_connect(int *sfd, char *host, char *port);
 int mpu_socket_sendmsg(int *sfd, char *msg);
 int mpu_socket_makemsg(struct mpu_dev *dev, char *msg, char *buf);
 
+#define MPU_MAXLINE 1024 
+#define MPU_DEFBKP "default_saved.bin"
 
 #endif /* _DEV_MPU_H_ */
 

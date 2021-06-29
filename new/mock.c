@@ -31,23 +31,24 @@ int main(int argc, char *argv[])
 //	printf("The size of mpu6050:%d\n", sizeof(struct mpu6050));
 
 	struct mpu_dev *dev = NULL;
-	mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev, MPU_MODE_RESET);
+	//mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev, MPU_MODE_RESET);
+	mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev, MPU_MODE_RESTORE);
 	assert(dev != NULL);
-	char *fn = "dev_mpu_parameters.log";
 
 	struct mpu_flt_dat *flt = NULL;
 	mpu_flt_com_init(dev, &flt);
 	assert(flt != NULL);
 
 
-//	mpu_ctl_calibration(dev);	
-	//mpu_ctl_clocksource(dev, CLKSEL_1);	
+	//mpu_ctl_calibration(dev);	
+	//printf("Saving parameters\n");
+	//mpu_dev_parameters_restore_bin(fn, dev);
+	mpu_ctl_samplerate(dev, 200);	
+//	mpu_ctl_clocksource(dev, CLKSEL_1);	
 //	mpu_ctl_dlpf(dev,5);
 //	mpu_ctl_accel_range(dev, 2);
 //	mpu_ctl_gyro_range(dev,250);
 
-	//mpu_dev_parameters_dump(fn, dev);
-	//mpu_dev_parameters_restore(fn, dev);
 	while(1) {
 		mpu_ctl_fifo_data(dev);
 		mpu_ctl_fix_axis(dev);
@@ -64,12 +65,12 @@ int main(int argc, char *argv[])
 }
 void mpu_print_all(struct mpu_dev *dev)
 {
-	//printf("%3.0lf Hz ", dev->sr);
+	printf("%3.0lf Hz ", dev->sr);
 	if(dev->cfg->temp_fifo_en) {
 		printf( "T:%+.1lf°C ",*(dev->t));
 	}
 	if(dev->cfg->accel_fifo_en) {
-		printf("|A|=%lf ", fabs(*(dev->AM) -1));
+		printf("|A|=%lf ", *(dev->AM) );
 		printf("Ax:%+lf Ay:%+lf Az:%+lf ", *(dev->Ax), *(dev->Ay), *(dev->Az));
 	}
 	if(dev->cfg->xg_fifo_en) {

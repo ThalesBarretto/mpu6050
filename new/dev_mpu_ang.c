@@ -176,7 +176,7 @@ void mpu_flt_com_update(struct mpu_flt_dat *flt)
 	//flt->Gy_last = flt->dev->ang->the + (*(flt->dev->Gy) * flt->dev->st);
 
 	/* motion detected, dont trust accelerometer */
-	if (fabs( (*(flt->dev->AM) -1) > flt->mtr) ) {
+	if (fabs( (*(flt->dev->AM) -flt->dev->cal->gra) > flt->mtr) ) {
 		flt->anf->ean[0] =  flt->ang->ean[0];
 		flt->anf->ean[1] =  flt->ang->ean[1];
 		flt->anf->ean[2] =  flt->ang->ean[2];
