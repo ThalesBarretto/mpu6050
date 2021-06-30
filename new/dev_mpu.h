@@ -869,6 +869,7 @@ int mpu_destroy(struct mpu_dev * mpudev);
 
 
 int mpu_ctl_reset(struct mpu_dev * dev);
+int mpu_ctl_dump(struct mpu_dev * dev, char* fn);
 
 int mpu_ctl_calibration(struct mpu_dev * dev);
 int mpu_ctl_calibration_reset(struct mpu_dev * dev);
@@ -949,6 +950,7 @@ int mpu_socket_makemsg(struct mpu_dev *dev, char *msg, char *buf);
 
 #define MPU_MAXLINE 1024 
 #define MPU_DEFBKP "default_saved.bin"
+#define MPU_DEFDUM "default_dump.txt"
 
 #endif /* _DEV_MPU_H_ */
 

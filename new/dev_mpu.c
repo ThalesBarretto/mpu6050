@@ -644,6 +644,8 @@ static int mpu_cfg_set(struct mpu_dev * dev)
 		return -1;
 
 
+	mpu_dev_parameters_save(MPU_DEFBKP, dev);
+
 	return 0;
 }
 
@@ -2281,3 +2283,29 @@ static int mpu_dev_parameters_restore(char *fn, struct mpu_dev *dev)
 	return 0;
 }
 
+int mpu_ctl_dump(struct mpu_dev *dev, char *fn)
+{
+
+	FILE *fp;
+	if ( (fp = fopen(fn, "w+")) == NULL) {
+		fprintf(stderr, "Unable to open file \"%s\"\n", fn);
+		return -1;
+	}
+
+	fprintf(fp, "MPU REGISTER DUMP\n");
+	fprintf(fp,"%8s %8s %20s %4s", "reg(hex)", "reg(dec)", "name", "val");
+
+	uint8_t regs[128][3];
+	for (int i = 0; i < 128; i++) {
+		regs[i][0] = i;
+		regs[i][1] = mpu_read_byte(dev, i, &regs[i][0]);
+		fprintf(fp, " %2x     %3d    %-20s %2x\n",
+			regs[i][0], 
+			regs[i][0], 
+			mpu_regnames[i], 
+			regs[i][1]);
+	}
+	fflush(fp);
+	fclose(fp);
+	return 0;
+}

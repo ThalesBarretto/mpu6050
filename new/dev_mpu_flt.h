@@ -60,7 +60,7 @@ struct mpu_flt_dat {
 void mpu_ang_init(struct mpu_dev *, struct mpu_ang **ang);
 static inline void mpu_ang_acc(struct mpu_ang * ang);
 static inline void mpu_ang_gyr(struct mpu_ang * base, struct mpu_ang *ang);
-void mpu_ang_pri(struct mpu_ang *ang);
+void mpu_ang_pri(struct mpu_ang *ang, char *msg, char *buf);
 
 void mpu_ang_init(struct mpu_dev * dev, struct mpu_ang **ang)
 {
@@ -101,11 +101,16 @@ static inline void mpu_ang_acc(struct mpu_ang *ang)
 	ang->ean[2] = 0;
 }
 
-void mpu_ang_pri(struct mpu_ang *ang)
+void mpu_ang_pri(struct mpu_ang *ang, char *msg, char *buf)
 {
-	printf("phi:%+.2Lf ", ang->ean[0]);
-	printf("the:%+.2Lf ", ang->ean[1]);
-	printf("psi:%+.2Lf ", ang->ean[2]);
+	sprintf(buf, "phi:%+.2Lf ", ang->ean[0]);
+	strcat(msg, buf);
+
+	sprintf(buf, "the:%+.2Lf ", ang->ean[1]);
+	strcat(msg, buf);
+
+	sprintf(buf, "psi:%+.2Lf ", ang->ean[2]);
+	strcat(msg, buf);
 }
 
 
