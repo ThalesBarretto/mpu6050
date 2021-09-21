@@ -1,4 +1,7 @@
 #include "dev_mpu_mtx.h"
+#include <math.h>
+#include <tgmath.h>
+
 #define MTX_ZER								\
 	for (int i = 0; i < m; i++) {					\
 		for (int j = 0; j < n; j++) {				\
@@ -9,64 +12,45 @@
 #define MTX_EYE								\
 	for (int i = 0; i < m; i++) {					\
 		for (int j = 0; j < n; j++) {				\
-			c[i][j] = 0;					\
+			if (i == j)					\
+				c[i][j] = 1;				\
+			else						\
+				c[i][j] = 0;				\
 		}							\
-		c[i][i] = 1;						\
 	}
 
 #define MTX_ROX \
 	c[0][0] =	1;\
 	c[0][1] =	0;\
 	c[0][2] =	0;\
-	c[0][3] =	0;\
 	c[1][0] =	0;\
 	c[1][1] =	cq;\
 	c[1][2] =	sq;\
-	c[1][3] =	0;\
 	c[2][0] =	0;\
 	c[2][1] =	-sq;\
 	c[2][2] =	cq;\
-	c[2][3] =	0;\
-	c[3][0] =	0;\
-	c[3][1] =	0;\
-	c[3][2] =	0;\
-	c[3][3] =	1;\
 
 #define MTX_ROY \
 	c[0][0] =	cq;\
 	c[0][1] =	0;\
 	c[0][2] =	sq;\
-	c[0][3] =	0;\
 	c[1][0] =	0;\
 	c[1][1] =	1;\
 	c[1][2] =	0;\
-	c[1][3] =	0;\
 	c[2][0] =	-sq;\
 	c[2][1] =	0;\
 	c[2][2] =	cq;\
-	c[2][3] =	0;\
-	c[3][0] =	0;\
-	c[3][1] =	0;\
-	c[3][2] =	0;\
-	c[3][3] =	1;\
 
 #define MTX_ROZ \
 	c[0][0] =	cq;\
 	c[0][1] =	sq;\
 	c[0][2] =	0;\
-	c[0][3] =	0;\
 	c[1][0] =	-sq;\
 	c[1][1] =	cq;\
 	c[1][2] =	0;\
-	c[1][3] =	0;\
 	c[2][0] =	0;\
 	c[2][1] =	0;\
 	c[2][2] =	1;\
-	c[2][3] =	0;\
-	c[3][0] =	0;\
-	c[3][1] =	0;\
-	c[3][2] =	0;\
-	c[3][3] =	1;\
 
 /*
  * Given a sequence of axis, rotates sequentially by given angles (in radians). 
@@ -185,6 +169,7 @@
 
 /* Find the R(4x4) rotation matrix, given sequence 1,2,3(phi, the, psi) */
 /* (Eq 287) */
+/*
 #define MTX_ROT_XYZ_ETR							\
 	c[0][0] = ( c_the * c_psi);					\
 	c[0][1] = ( c_the * s_psi);					\
@@ -202,6 +187,19 @@
 	c[3][1] = 0;							\
 	c[3][2] = 0;							\
 	c[3][3] = 1;
+	*/
+/* 3x3 roatation given yaw pitch roll */
+#define MTX_ROT_XYZ_ETR							\
+	c[0][0] = ( c_the * c_psi);					\
+	c[0][1] = ( c_the * -s_psi);					\
+	c[0][2] = (-s_the);						\
+	c[1][0] = ( -s_phi * s_the * c_psi) + ( c_phi * s_psi);		\
+	c[1][1] = ( s_phi * s_the * s_psi) + ( c_phi * c_psi);		\
+	c[1][2] = ( c_the * -s_phi);					\
+	c[2][0] = ( c_phi * s_the * c_psi) + ( s_phi * s_psi);		\
+	c[2][1] = ( s_phi * c_psi) - ( c_phi * s_the * s_psi) ;		\
+	c[2][2] = ( c_the * c_phi);
+
 
 /* 
  * Find the quaternion given Euler angles [roll, pitch, yaw]
@@ -218,10 +216,10 @@
  * (Eq. 73) u123(Rq(q)) =  
  */
 #define MTX_ROT_XYZ_QTE							\
- 	C[0] =  atan2((2*A[2]*A[3]) + (2*A[0]*A[1]), 			\
+ 	C[0] =   atan2((2*A[2]*A[3]) + (2*A[0]*A[1]), 			\
 	     (A[3]*A[3]) - (A[2]*A[2]) - (A[1]*A[1]) + (A[0]*A[0])); 	\
-	C[1] = -asin((2*A[1]*A[3]) - (2*A[0]*A[2]));			\
- 	C[2] =  atan2((2*A[1]*A[2]) + (2*A[0]*A[3]), 			\
+	C[1] =  -asin((2*A[1]*A[3]) - (2*A[0]*A[2]));			\
+ 	C[2] =   atan2((2*A[1]*A[2]) + (2*A[0]*A[3]), 			\
 		(A[1]*A[1]) + (A[0]*A[0]) - (A[3]*A[3]) - (A[2]*A[2])); 
 
 /* Find the (4x4) rotation matrix, given sequence 3,2,1(phi, the, psi) */
@@ -229,19 +227,12 @@
 	c[0][0] =   c_psi * c_the;					\
 	c[0][1] = ( c_phi * s_psi) + (c_psi * s_phi * s_the);		\
 	c[0][2] = ( s_phi * s_psi) - (c_phi * c_psi * s_the);		\
-	c[0][3] = 0;							\
 	c[1][0] = (-c_the * s_psi); 					\
 	c[1][1] = ( c_psi * c_phi) - (s_the * s_phi * s_psi); 		\
 	c[1][2] = ( c_psi * s_phi) + (c_phi * s_psi * s_the);		\
-	c[1][3] = 0;							\
 	c[2][0] =    s_the; 						\
 	c[2][1] = (- c_the * s_phi);					\
 	c[2][2] =    c_the * c_phi;					\
-	c[2][3] = 0;							\
-	c[3][0] = 0;							\
-	c[3][1] = 0;							\
-	c[3][2] = 0;							\
-	c[3][3] = 1;
 
 #define MTX_CPY								\
 	for (int i = 0; i < m; i++) {					\
@@ -274,7 +265,6 @@
 #define MTX_MUL								\
 	for (int i = 0; i < m; i++) {					\
 		for (int j = 0; j < n; j++) {				\
-			c[i][j] = 0;					\
 			for (int k = 0; k < p; k++) {			\
 				c[i][j] += (a[i][k] * b[k][j]);		\
 			}						\
@@ -494,63 +484,63 @@ void mtxLf_eye(const int m, const int n, long double *C)
 /* C(4x4)=I will be changed to cos(q),... in respective values */
 void  mtxf_rox(const float q, float *C)
 {
-	float (*c)[4] = (float (*)[4])C;
+	float (*c)[3] = (float (*)[3])C;
 	float cq = cos(q);
 	float sq = sin(q);
 	MTX_ROX;
 }
 void  mtxf_roy(const float q, float *C)
 {
-	float (*c)[4] = (float (*)[4])C;
+	float (*c)[3] = (float (*)[3])C;
 	float cq = cos(q);
 	float sq = sin(q);
 	MTX_ROY;
 }
 void  mtxf_roz(const float q, float *C)
 {
-	float (*c)[4] = (float (*)[4])C;
+	float (*c)[3] = (float (*)[3])C;
 	float cq = cos(q);
 	float sq = sin(q);
 	MTX_ROZ;
 }
 void mtxlf_rox(const double q, double *C)
 {
-	double (*c)[4] = (double (*)[4])C;
+	double (*c)[3] = (double (*)[3])C;
 	double cq = cosl(q);
 	double sq = sinl(q);
 	MTX_ROX;
 }
 void mtxlf_roy(const double q, double *C)
 {
-	double (*c)[4] = (double (*)[4])C;
+	double (*c)[3] = (double (*)[3])C;
 	double cq = cosl(q);
 	double sq = sinl(q);
 	MTX_ROY;
 }
 void mtxlf_roz(const double q, double *C)
 {
-	double (*c)[4] = (double (*)[4])C;
+	double (*c)[3] = (double (*)[3])C;
 	double cq = cos(q);
 	double sq = sin(q);
 	MTX_ROZ;
 }
 void mtxLf_rox(const long double q, long double *C)
 {
-	long double (*c)[4] = (long double (*)[4])C;
+	long double (*c)[3] = (long double (*)[3])C;
 	long double cq = cosl(q);
 	long double sq = sinl(q);
 	MTX_ROX;
 }
 void mtxLf_roy(const long double q, long double *C)
 {
-	long double (*c)[4] = (long double (*)[4])C;
+	long double (*c)[3] = (long double (*)[3])C;
 	long double cq = cosl(q);
 	long double sq = sinl(q);
 	MTX_ROY;
 }
 void mtxLf_roz(const long double q, long double *C)
 {
-	long double (*c)[4] = (long double (*)[4])C;
+	long double (*c)[3] = (long double (*)[3])C;
 	long double cq = cosl(q);
 	long double sq = sinl(q);
 	MTX_ROZ;
@@ -663,32 +653,34 @@ void mtxLf_sub(const long double * A, const long double * B, const int m, const 
 	long double (*c)[n] = (long double (*)[n])C;
 	MTX_SUB;
 }
+
+/* C(mxn) = A(mxp) * B(pxn) */
 void mtxi_mul(const int * const A, const int * const B, const int m, const int p, const int n, int *C)
 {
-	int (*a)[n] = (int (*)[n])A;
-	int (*b)[p] = (int (*)[n])B;
-	int (*c)[p] = (int (*)[n])C;
+	int (*a)[p] = (int (*)[p])A;
+	int (*b)[n] = (int (*)[n])B;
+	int (*c)[n] = (int (*)[n])C;
 	MTX_MUL;
 }
 void mtxf_mul(const float * A, const float * B, const int m, const int p, const int n, float *C)
 {
-	float (*a)[n] = (float (*)[n])A;
-	float (*b)[p] = (float (*)[n])B;
-	float (*c)[p] = (float (*)[n])C;
+	float (*a)[p] = (float (*)[p])A;
+	float (*b)[n] = (float (*)[n])B;
+	float (*c)[n] = (float (*)[n])C;
 	MTX_MUL;
 }
 void mtxlf_mul(const double * A, const double * B, const int m, const int p, const int n, double *C)
 {
-	double (*a)[n] = (double (*)[n])A;
-	double (*b)[p] = (double (*)[n])B;
-	double (*c)[p] = (double (*)[n])C;
+	double (*a)[p] = (double (*)[p])A;
+	double (*b)[n] = (double (*)[n])B;
+	double (*c)[n] = (double (*)[n])C;
 	MTX_MUL;
 }
 void mtxLf_mul(const long double * A, const long double * B, const int m, const int p, const int n, long double *C)
 {
-	long double (*a)[n] = (long double (*)[n])A;
-	long double (*b)[p] = (long double (*)[n])B;
-	long double (*c)[p] = (long double (*)[n])C;
+	long double (*a)[p] = (long double (*)[p])A;
+	long double (*b)[n] = (long double (*)[n])B;
+	long double (*c)[n] = (long double (*)[n])C;
 	MTX_MUL;
 }
 
@@ -1320,7 +1312,7 @@ void mtxLf_rot_xyz_cp2(const long double * const A, long double *C)
 #define d2r(q) ((q)*(PI/180.0L)) 
 void  mtxf_rot_xyz_etr(const int ade, const float * const A,  float *C)
 {
-	float (*c)[4] = (float (*)[4])C;
+	float (*c)[3] = (float (*)[3])C;
 	float s_psi;
 	float s_the;
 	float s_phi;
@@ -1346,7 +1338,7 @@ void  mtxf_rot_xyz_etr(const int ade, const float * const A,  float *C)
 }
 void mtxlf_rot_xyz_etr(const int ade, const double * const  A, double *C)
 {
-	double (*c)[4] = (double (*)[4])C;
+	double (*c)[3] = (double (*)[3])C;
 	double s_psi;
 	double s_the;
 	double s_phi;
@@ -1372,7 +1364,7 @@ void mtxlf_rot_xyz_etr(const int ade, const double * const  A, double *C)
 }
 void mtxLf_rot_xyz_etr(const int ade, const long double * const A, long double *C)
 {
-	long double (*c)[4] = (long double (*)[4])C;
+	long double (*c)[3] = (long double (*)[3])C;
 	long double s_psi;
 	long double s_the;
 	long double s_phi;
@@ -1399,7 +1391,7 @@ void mtxLf_rot_xyz_etr(const int ade, const long double * const A, long double *
 
 void  mtxf_rot_xyz_rte(const float * const A, const int cde, float *C)
 {
-	float (*a)[4] = (float (*)[4])A;
+	float (*a)[3] = (float (*)[3])A;
 	MTX_ROT_XYZ_RTE;
 	if (cde) {
 		C[2]= r2d(C[2]);
@@ -1409,7 +1401,7 @@ void  mtxf_rot_xyz_rte(const float * const A, const int cde, float *C)
 }
 void mtxlf_rot_xyz_rte(const double * const  A, const int cde,double *C)
 {
-	double (*a)[4] = (double (*)[4])A;
+	double (*a)[3] = (double (*)[3])A;
 	MTX_ROT_XYZ_RTE;
 	if (cde) {
 		C[2]= r2d(C[2]);
@@ -1419,7 +1411,7 @@ void mtxlf_rot_xyz_rte(const double * const  A, const int cde,double *C)
 }
 void mtxLf_rot_xyz_rte(const long double * const A, const int cde,long double *C)
 {
-	long double (*a)[4] = (long double (*)[4])A;
+	long double (*a)[3] = (long double (*)[3])A;
 	MTX_ROT_XYZ_RTE;
 	if (cde) {
 		C[2]= r2d(C[2]);

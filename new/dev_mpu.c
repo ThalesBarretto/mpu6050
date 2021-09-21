@@ -143,7 +143,7 @@ static int mpu_cfg_reset(struct mpu_dev * dev);
 static int mpu_dat_reset(struct mpu_dev * dev);
 static int mpu_cal_reset(struct mpu_dev * dev);
 
-static int mpu_cfg_recover(struct mpu_dev * dev);
+static int mpu_cfg_recover(struct mpu_dev * dev) __attribute__((unused));
 static int mpu_dev_parameters_save(char *fn, struct mpu_dev *dev);
 static int mpu_dev_parameters_restore(char *fn, struct mpu_dev *dev);
 
@@ -1017,6 +1017,8 @@ static int mpu_cfg_parse_SMPLRT_DIV(struct mpu_dev * dev)
 
 	dev->sr   = sampling_rate; 
 	dev->st	  = sampling_time;
+	dev->dly.tv_sec = trunc(sampling_time);
+	dev->dly.tv_nsec = 1000000000 * (sampling_time - dev->dly.tv_sec);
 
 	
 	return 0;
@@ -1495,6 +1497,7 @@ int mpu_ctl_fifo_data(struct mpu_dev *dev)
 		mpu_ctl_fifo_flush(dev);
 	} else {
 		while (dev->fifocnt < len) { /* buffer underflow */
+			nanosleep(&(dev->dly), NULL);
 			mpu_ctl_fifo_count(dev);
 		}
 	}
@@ -2142,15 +2145,17 @@ int mpu_ctl_calibration(struct mpu_dev *dev)
 		yg_bias += *(dev->Gy);
 		zg_bias += *(dev->Gz);
 		AM_bias += *(dev->AM);
+		GM_bias += *(dev->GM);
 	}
 	/* take the average difference */
 	xa_bias /= dev->cal->samples;
 	ya_bias /= dev->cal->samples;
 	za_bias /= dev->cal->samples;
+	AM_bias /= dev->cal->samples;
 	xg_bias /= dev->cal->samples;
 	yg_bias /= dev->cal->samples;
 	zg_bias /= dev->cal->samples;
-	AM_bias /= dev->cal->samples;
+	GM_bias /= dev->cal->samples;
 
 	/* in LSB's, scale things to 1'g acceleration */
 	long double a_factor = (dev->albs *  dev->cal->AM_bias);
@@ -2175,6 +2180,10 @@ int mpu_ctl_calibration(struct mpu_dev *dev)
 	mpu_write_byte(dev, ZG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->zg_cust)&0xFF);
 
 	/* second pass - fine */
+	xa_bias = 0;
+	ya_bias = 0;
+	za_bias = 0;
+	AM_bias = 0;
 	xg_bias = 0;
 	yg_bias = 0;
 	zg_bias = 0;
@@ -2183,11 +2192,19 @@ int mpu_ctl_calibration(struct mpu_dev *dev)
 	mpu_ctl_fifo_flush(dev);
 	for (int i = 0; i <  dev->cal->samples; i++) {
 		mpu_ctl_fifo_data(dev);
+		xa_bias += *(dev->Ax);
+		ya_bias += *(dev->Ay);
+		za_bias += *(dev->Az);
+		AM_bias += *(dev->AM);
 		xg_bias += *(dev->Gx);
 		yg_bias += *(dev->Gy);
 		zg_bias += *(dev->Gz);
-		GM_bias += *(dev->AM);
+		GM_bias += *(dev->GM);
 	}
+	xa_bias /= dev->cal->samples;
+	ya_bias /= dev->cal->samples;
+	za_bias /= dev->cal->samples;
+	AM_bias /= dev->cal->samples;
 	xg_bias /= dev->cal->samples;
 	yg_bias /= dev->cal->samples;
 	zg_bias /= dev->cal->samples;
@@ -2205,18 +2222,30 @@ int mpu_ctl_calibration(struct mpu_dev *dev)
 	mpu_write_byte(dev, ZG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->zg_cust)>>8)&0xFF));
 	mpu_write_byte(dev, ZG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->zg_cust)&0xFF);
 
+	xa_bias = 0;
+	ya_bias = 0;
+	za_bias = 0;
+	AM_bias = 0;
 	xg_bias = 0;
 	yg_bias = 0;
 	zg_bias = 0;
 	GM_bias = 0;
 	for (int i = 0; i < dev->cal->samples; i++) {
 		mpu_ctl_fifo_data(dev);
+		xa_bias += *(dev->Ax);
+		ya_bias += *(dev->Ay);
+		za_bias += *(dev->Az);
+		AM_bias += *(dev->AM);
 		xg_bias += *(dev->Gx);
 		yg_bias += *(dev->Gy);
 		zg_bias += *(dev->Gz);
-		GM_bias += *(dev->AM);
+		GM_bias += *(dev->GM);
 	}
 	/* take the average difference */
+	xa_bias /= dev->cal->samples;
+	ya_bias /= dev->cal->samples;
+	za_bias /= dev->cal->samples;
+	AM_bias /= dev->cal->samples;
 	xg_bias /= dev->cal->samples;
 	yg_bias /= dev->cal->samples;
 	zg_bias /= dev->cal->samples;

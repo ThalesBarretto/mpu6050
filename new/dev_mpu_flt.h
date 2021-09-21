@@ -142,8 +142,8 @@ void mpu_flt_com_init(struct mpu_dev *dev, struct mpu_flt_dat **flt)
 	mpu_ang_init(dev, &(*flt)->anm); 
 
 	(*flt)->isd = 1;		/* output angles in degrees	*/
-	(*flt)->mtr = 0.05L;		/* accel motion treshold in g's	*/
-	(*flt)->ant = 0.002L;		/* accel noise treshold in g's	*/
+	(*flt)->mtr = 0.5L;		/* accel motion treshold in g's	*/
+	(*flt)->ant = 0.08L;		/* accel noise treshold in g's	*/
 
 	(*flt)->gain = 0.8L;		/* gain parameter		*/
 	(*flt)->gaa = 1 - (*flt)->gain; /* computed accelerometer gain	*/

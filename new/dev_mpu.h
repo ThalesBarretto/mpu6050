@@ -9,24 +9,25 @@
  * MPU6050 device description
  * Include this in your .c file
  */
-#include <stdlib.h>	   /* for malloc(), free(), exit() */
-#include <stdio.h>	   /* for printf(), scanf(), fopen(), perror() */
-#include <string.h>	   /* for memcpy() */
-#include <unistd.h>	   /* for close(), write(), getopt(), size_t */
-#include <inttypes.h>	   /* for uint8_t, uint16_t, etc */
-#include <stdint.h>	   /* for uint8_t, uint16_t, etc */
-#include <stddef.h>	   /* for size_t */
-#include <stdbool.h>	   /* for bool */
-#include <fcntl.h>	   /* for open() */
-#include <sys/stat.h>	   /* for open() */
-#include <sys/types.h>	   /* for open() */
-#include <sys/ioctl.h>	   /* for ioctl() */
-#include <linux/types.h>   /* for __u8, __s32 */
-#include <i2c/smbus.h> 	   /* for i2c_smbus_x */
-#include <linux/i2c.h> 	   /* for i2c_smbus_x */
-#include <linux/i2c-dev.h> /* for i2c_smbus_x */
-#include <stdio.h>
-#include <math.h>
+#include <stdlib.h>		/* for malloc(), free(), exit() */
+#include <stdio.h>		/* for printf(), scanf(), fopen(), perror() */
+#include <string.h>		/* for memcpy() */
+#include <unistd.h>		/* for close(), write(), getopt(), size_t */
+#include <inttypes.h>		/* for uint8_t, uint16_t, etc */
+#include <stdint.h>		/* for uint8_t, uint16_t, etc */
+#include <stddef.h>		/* for size_t */
+#include <stdbool.h>		/* for bool */
+#include <fcntl.h>		/* for open() */
+#include <sys/stat.h>		/* for open() */
+#include <sys/types.h>		/* for open() */
+#include <sys/ioctl.h>		/* for ioctl() */
+#include <linux/types.h>	/* for __u8, __s32 */
+#include <i2c/smbus.h> 		/* for i2c_smbus_x */
+#include <linux/i2c.h> 		/* for i2c_smbus_x */
+#include <linux/i2c-dev.h>	/* for i2c_smbus_x */
+#include <stdio.h>		/* for printf, etc */
+#include <math.h>		/* for sin, cos, tan, atan2 etc */
+#include <time.h>		/* for clock_nanosleep */
 
 /*
  * Orientation of Sensor Axis
@@ -698,6 +699,7 @@ struct mpu_dev {
 	struct	mpu_cfg	*cfg;	/* config register state */
 	struct	mpu_dat	*dat;	/* sensor readings */
 	struct	mpu_cal	*cal;	/* calibration data */
+	struct  timespec dly;	/* fifo data delay */
 	/* readable config - result of special handlers */
 	bool	aolpm;		/* accelerometer-only low power mode */
 	double	wake_freq;	/* low-power cycling freq */

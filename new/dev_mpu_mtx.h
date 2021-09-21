@@ -7,8 +7,6 @@
 
 #ifndef MPU_MTX_H_
 #define MPU_MTX_H_
-#include <math.h>
-#include <tgmath.h>
 /*
  * MATRIX OPERATIONS
  * Conventions:

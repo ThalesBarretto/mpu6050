@@ -66,11 +66,13 @@ int main(int argc, char *argv[])
 	mpu_flt_com_init(dev, &flt);
 	assert(flt != NULL);
 
-	int sfd;
-	if (mpu_socket_connect(&sfd, mopts->n_hos, mopts->n_por) < 0) {
-		fprintf(stderr, "socket client error\n");
-	} else {
-		fprintf(stderr,"connected sfd:%d\n", sfd);
+	int sfd = -1;
+	if (mopts->ne) {
+		if (mpu_socket_connect(&sfd, mopts->n_hos, mopts->n_por) < 0) {
+			fprintf(stderr, "socket client error\n");
+		} else {
+			fprintf(stderr,"connected sfd:%d\n", sfd);
+		}
 	}
 
 	char *msg = malloc(sizeof(char)*MPU_MAXLINE);
@@ -80,15 +82,18 @@ int main(int argc, char *argv[])
 		mpu_ctl_fifo_data(dev);
 		mpu_ctl_fix_axis(dev);
 		mpu_flt_com_update(flt);
+		strcat(msg,"\r");
 		mpu_print_all(dev, msg, buf);
 		mpu_ang_pri(flt->anf, msg, buf);
-		strcat(msg,"\n");
+		//strcat(msg,"\n");
 
-		if (!mopts->quiet)
+		if (!mopts->quiet) {
 			printf("%s", msg);
+		}
 
-		if (mopts->ne && (sfd >= 0))
+		if (mopts->ne && (sfd >= 0)) {
 			mpu_socket_sendmsg(&sfd, msg);
+		}
 
 		sprintf(msg,"%s", "");
 	}
@@ -110,7 +115,7 @@ void mpu_print_all(struct mpu_dev *dev, char *msg, char *buf)
 		strcat(msg,buf);
 	}
 	if(dev->cfg->accel_fifo_en) {
-		sprintf(buf, "|A|=%lf ", *(dev->AM) );
+		sprintf(buf, " |A|=%lf ", *(dev->AM) );
 		strcat(msg,buf);
 		sprintf(buf, "Ax:%+lf Ay:%+lf Az:%+lf ", *(dev->Ax), *(dev->Ay), *(dev->Az));
 		strcat(msg,buf);
