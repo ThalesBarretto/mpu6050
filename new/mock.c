@@ -57,7 +57,11 @@ int main(int argc, char *argv[])
 	mpu_opt_get(lopts, argc, argv, mopts);
 
 	struct mpu_dev *dev = NULL;
-	mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev, MPU_MODE_RESTORE);
+	if (mopts->re)
+		mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev, MPU_MODE_RESET);
+	else
+		mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev, MPU_MODE_RESTORE);
+
 	assert(dev != NULL);
 
 	mpu_opt_set(dev, mopts);
@@ -85,7 +89,7 @@ int main(int argc, char *argv[])
 		strcat(msg,"\r");
 		mpu_print_all(dev, msg, buf);
 		mpu_ang_pri(flt->anf, msg, buf);
-		//strcat(msg,"\n");
+		strcat(msg,"\n");
 
 		if (!mopts->quiet) {
 			printf("%s", msg);
