@@ -52,11 +52,11 @@ void mtx_rot_example2(void)
 	float *eyem = (float *)calloc(100,sizeof(float));
 	float *bufm = (float *)calloc(100,sizeof(float));
 	float *gyrm = (float *)calloc(100,sizeof(float));
-	mtx_eye(4, 4, eyem);
+	mtx_eye(3, 3, eyem);
 
 	/* The Identity matrix */
 	printf("EYE Matrix\n");
-	mtx_pri(eyem, 4, 4);
+	mtx_pri(eyem, 3, 3);
 
 	/* lying flat, straight */
 	printf("Euler to rotation matrix 1 - flat\n");
@@ -64,31 +64,31 @@ void mtx_rot_example2(void)
 	euler[1] = 0; /* THE - around y' axis */
 	euler[2] = 0; /* PSI - around z axis */
 	mtx_rot_xyz_etr(MTX_ROT_DEG, euler, rotmx);
-	mtx_pri(rotmx, 4, 4);
+	mtx_pri(rotmx, 3, 3);
 	printf("R*I\n");
-	mtx_mul(rotmx, eyem, 4, 4, 4, bufm);
-	mtx_pri(bufm, 4, 4);
+	mtx_mul(rotmx, eyem, 3, 3, 3, bufm);
+	mtx_pri(bufm, 3, 3);
 
 	printf("Euler to rotation matrix 2 - 90 degress x\n");
 	euler[0] = 90; /* phi = 90 degrees */
 	euler[1] = 0;
 	euler[2] = 0;
 	mtx_rot_xyz_etr(MTX_ROT_DEG, euler, bufm);
-	mtx_pri(bufm, 4, 4);
+	mtx_pri(bufm, 3, 3);
 
 	printf("Euler to rotation matrix 3 - 90 degress y\n");
 	euler[0] = 0;
 	euler[1] = 90; /* the = 90 degrees */
 	euler[2] = 0;
 	mtx_rot_xyz_etr(MTX_ROT_DEG, euler, bufm);
-	mtx_pri(bufm, 4, 4);
+	mtx_pri(bufm, 3, 3);
 
-	printf("Euler to rotation matrix 4 - 90 degress z\n");
+	printf("Euler to rotation matrix 3 - 90 degress z\n");
 	euler[0] = 0;
 	euler[1] = 0;
 	euler[2] = 90; /*psi = 90 degrees */
 	mtx_rot_xyz_etr(MTX_ROT_DEG, euler, bufm);
-	mtx_pri(bufm, 4, 4);
+	mtx_pri(bufm, 3, 3);
 
 	euler[0] = 30; /*phi = 30 degrees */
 	euler[1] = 60; /*psi = 60 degrees */
@@ -99,7 +99,7 @@ void mtx_rot_example2(void)
 
 	printf("ETR - Rotation matrix for Euler(30,60,45)\n");
 	mtx_rot_xyz_etr(MTX_ROT_DEG, euler, rotmx);
-	mtx_pri(rotmx, 4, 4);
+	mtx_pri(rotmx, 3, 3);
 
 	printf("RTE - Euler angles for Rotation matrix\n");
 	mtx_rot_xyz_rte(rotmx, MTX_ROT_DEG, bufm);
@@ -171,7 +171,6 @@ void mtx_rot_xyz_example(void)
 {
 	float v[3] = {1, 1, 1}; /* 3d vector */
 	float *E = (float *)calloc(3,sizeof(float)); 	/* euler angles */
-	float *B = (float *)calloc(100,sizeof(float));	/* auxiliary matrix */
 	float *C = (float *)calloc(100,sizeof(float));	/* auxiliary matrix */
 	float *R = (float *)calloc(100,sizeof(float));	/* rotation matrix */
 	float *w = (float *)calloc(100,sizeof(float));  /* final vector */
@@ -182,20 +181,18 @@ void mtx_rot_xyz_example(void)
 	mtx_pri(v, 3, 1);
 	printf("\n");
 
-	while(getchar()) {
-		printf("Type angle sequence (roll,pitch,yaw) in degrees:\n");
-		scanf("%f,%f,%f", &E[0],&E[1], &E[2]);
-		printf("The angles:\n");
-		mtx_pri(E, 3, 1);
-		printf("Rotate v bu E ( w = R * v):\n");
-		mtx_rot_xyz_etr(MTX_ROT_DEG, E, R);
-		printf("Tha matrix R (Rotation Matrix)\n");
-		mtx_pri(R, 3, 3);
-		mtx_mul(R, v, 3, 3, 1, w);
-		mtx_pri(w, 3, 1);
-		mtx_zer(3, 1, w);
-		printf("\n");
-	}
+	printf("Type angle sequence (roll,pitch,yaw) in degrees:\n");
+	scanf("%f,%f,%f", &E[0],&E[1], &E[2]);
+	printf("The angles:\n");
+	mtx_pri(E, 3, 1);
+	printf("Rotate v bu E ( w = R * v):\n");
+	mtx_rot_xyz_etr(MTX_ROT_DEG, E, R);
+	printf("Tha matrix R (Rotation Matrix)\n");
+	mtx_pri(R, 3, 3);
+	mtx_mul(R, v, 3, 3, 1, w);
+	mtx_pri(w, 3, 1);
+	mtx_zer(3, 1, w);
+	printf("\n");
 
 	printf("The Matrix Ry(%.Lf)\n", todeg(q));
 	mtx_roy(q, C);
@@ -211,7 +208,6 @@ void mtx_example(void)
 {
 	long double a[4]    = {  1,  2,   3,  4  };
 	long double b[2][2] = { {5,  6}, {7,  8} };
-	long double c[4]    = {  9, 10,  11, 12  };
 
 	long double *A = (long double *)a;
 	long double *B = (long double *)b;
@@ -320,7 +316,6 @@ void example(void)
 	int (*z)[2] = (int (*)[2])c;	/* compiler complaint w/o cast */
 	int *w      = (int *)x;		/* compiler complaint w/o cast */
 	int *p = a;
-	int *q = (int *)calloc(4,sizeof(int));
 	int *k = c;
 
 	pr_arr(a, 4);
