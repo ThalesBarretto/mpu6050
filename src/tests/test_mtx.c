@@ -49,17 +49,14 @@ void mtx_rot_example2(void)
 	float *euler = (float *)calloc(100,sizeof(float));
 	float *quatr = (float *)calloc(100,sizeof(float));
 	float *rotmx = (float *)calloc(100,sizeof(float));
-	float *eyem = (float *)calloc(100,sizeof(float));
 	float *bufm = (float *)calloc(100,sizeof(float));
 	float *gyrm = (float *)calloc(100,sizeof(float));
+
+	float *eyem = (float *)calloc(100,sizeof(float));
 	mtx_eye(3, 3, eyem);
 
-	/* The Identity matrix */
-	printf("EYE Matrix\n");
-	mtx_pri(eyem, 3, 3);
-
 	/* lying flat, straight */
-	printf("Euler to rotation matrix 1 - flat\n");
+	printf("Euler (XYZ) to rotation matrix 1 - flat\n");
 	euler[0] = 0; /* PHI - around x'' axis */
 	euler[1] = 0; /* THE - around y' axis */
 	euler[2] = 0; /* PSI - around z axis */
@@ -69,20 +66,19 @@ void mtx_rot_example2(void)
 	mtx_mul(rotmx, eyem, 3, 3, 3, bufm);
 	mtx_pri(bufm, 3, 3);
 
+	/* This will test the ETR in sequence XYZ */
 	printf("Euler to rotation matrix 2 - 90 degress x\n");
 	euler[0] = 90; /* phi = 90 degrees */
 	euler[1] = 0;
 	euler[2] = 0;
 	mtx_rot_xyz_etr(MTX_ROT_DEG, euler, bufm);
 	mtx_pri(bufm, 3, 3);
-
 	printf("Euler to rotation matrix 3 - 90 degress y\n");
 	euler[0] = 0;
 	euler[1] = 90; /* the = 90 degrees */
 	euler[2] = 0;
 	mtx_rot_xyz_etr(MTX_ROT_DEG, euler, bufm);
 	mtx_pri(bufm, 3, 3);
-
 	printf("Euler to rotation matrix 3 - 90 degress z\n");
 	euler[0] = 0;
 	euler[1] = 0;
@@ -90,10 +86,10 @@ void mtx_rot_example2(void)
 	mtx_rot_xyz_etr(MTX_ROT_DEG, euler, bufm);
 	mtx_pri(bufm, 3, 3);
 
+	/* now, with a more complex example */
 	euler[0] = 30; /*phi = 30 degrees */
 	euler[1] = 60; /*psi = 60 degrees */
 	euler[2] = 45; /*psi = 45 degrees */
-
 	printf("ETR - Euler(30,60,45) in degrees\n");
 	mtx_pri(euler, 3, 1);
 
@@ -204,6 +200,7 @@ void mtx_rot_xyz_example(void)
 	mtx_pri(C, 3, 3);
 	printf("\n");
 }
+
 void mtx_example(void)
 {
 	long double a[4]    = {  1,  2,   3,  4  };
@@ -316,7 +313,6 @@ void example(void)
 	int (*z)[2] = (int (*)[2])c;	/* compiler complaint w/o cast */
 	int *w      = (int *)x;		/* compiler complaint w/o cast */
 	int *p = a;
-	int *k = c;
 
 	pr_arr(a, 4);
 	pr_mtx_x((int*)y, 2, 2);

@@ -1,4 +1,7 @@
 #include "dev_mpu.h"
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 int mpu_read_byte(struct mpu_dev * const dev,
 		const mpu_reg_t reg,

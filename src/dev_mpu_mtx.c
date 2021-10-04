@@ -161,10 +161,22 @@
  * Find the Euler angles [phi, theta, psi] given a rotation matrix
  * (Eq. 72) u123(R) = [phi123(R) the123(R) psi123(R)] = 
  */
+
+/*
+ * #define MTX_ROT_XYZ_RTE						\
+ *  	C[0] =   atan2(a[1][2], a[2][2]); 				\
+ *  	C[1] =  -asin( a[0][2]);					\
+ *  	C[2] =   atan2(a[0][1], a[0][0]); 
+ * 	C[0] =   
+ */
+/*
+ * The matrix from for body_xyz to angles en ned frame.
+ * Notice the inversion of y and z do right and down (body frame)
+ */
 #define MTX_ROT_XYZ_RTE							\
- 	C[0] =   atan2(a[1][2], a[2][2]); 				\
+ 	C[0] =   atan2(-a[1][2], a[2][2]); 				\
  	C[1] =  -asin( a[0][2]);					\
- 	C[2] =   atan2(a[0][1], a[0][0]); 
+ 	C[2] =   atan2(-a[0][1], a[0][0]); 
 
 
 /* Find the R(4x4) rotation matrix, given sequence 1,2,3(phi, the, psi) */

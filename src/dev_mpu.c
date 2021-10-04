@@ -1,4 +1,5 @@
 #include "dev_mpu.h"
+#include <time.h>
 	
 const struct mpu_cfg mpu6050_defcfg = {
 	.cfg =	{

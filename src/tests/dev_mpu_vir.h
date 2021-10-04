@@ -1,3 +1,7 @@
+/* TODO:
+ * USE this this data structure as a virtual MPU6050 device
+ * for testing purposes.
+ */
 /* virtual mpu6050 device */
 struct __attribute__((__packed__)) mpu6050 {
 	unsigned int					: 8;	// reg0

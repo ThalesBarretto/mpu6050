@@ -1,7 +1,34 @@
-all:
-	gcc -DHAVE_INLINE -o mpu_gsl mpu6050.c -O2 -lm -li2c -lgsl
+CC	=gcc
+CFLAGS	=-std=gnu11 -O2 -Wall
 
-.PHONY test: test.c
-#	gcc -std=c11 -c matrix.c
-	gcc -std=c11 -c dev_mpu_mtx.c 
-	gcc -o test test.c dev_mpu_mtx.o -lm
+SRC	=src
+OBJ	=obj
+BIN	=bin
+TEST	=$(SRC)/tests
+
+LIBS	= -lm -li2c
+SRCS	=$(wildcard	$(SRC)/*.c)
+OBJS	=$(patsubst	$(SRC)/*.c, $(OBJ)/*.o, $(SRCS))
+TESTS	=$(wildcard	$(TEST)/*.c)
+TESTO	=$(patsubst	$(TEST)/*.c, $(OBJ)/*.o, $(TESTS))
+TESTB	=test_mtx
+BINS	=mock
+
+$(OBJ):
+	mkdir -p $@
+
+$(BIN):
+	mkdir -p $@
+
+$(OBJ)/%.o: $(SRC)/%.c $(TESTS)/%.c $(OBJS) $(TESTO)
+	$(CC) $(CFLAGS) $(LIBS) -c $< -o $@
+
+$(BIN)/$(BINS): $(OBJS) $(OBJ) $(BIN)
+	$(CC) $(CFLAGS) $(LIBS) $(OBJS) -o $@ $(LDFLAGS)
+
+all:	$(BIN)/$(BINS) 
+
+clean:
+	$(RM) -r $(BIN) $(OBJ) 
+
+.PHONY: all clean
