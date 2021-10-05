@@ -1,18 +1,21 @@
 CC	=gcc
-CFLAGS	=-std=gnu11 -O2 -Wall
+CFLAGS	=-g -std=gnu17 -O0 -Wall
 
 SRC	=src
-OBJ	=obj
-BIN	=bin
-TEST	=$(SRC)/tests
+BLD	=bld
+OBJ	=$(BLD)/obj
+BIN	=$(BLD)/bin
 
-LIBS	= -lm -li2c
+
+LIBS	=-lm -li2c
 SRCS	=$(wildcard	$(SRC)/*.c)
-OBJS	=$(patsubst	$(SRC)/*.c, $(OBJ)/*.o, $(SRCS))
-TESTS	=$(wildcard	$(TEST)/*.c)
-TESTO	=$(patsubst	$(TEST)/*.c, $(OBJ)/*.o, $(TESTS))
-TESTB	=test_mtx
+OBJS	=$(patsubst	$(SRC)/%.c,$(OBJ)/%.o, $(SRCS))
+PKGS	=$(patsubst	$(BINS),$(BINS).tar.gz,$(BINS))
 BINS	=mock
+
+release: CFLAGS=-Wall -O2 -DNDEBUG
+release: clean
+release: $(BIN)/$(BINS)
 
 $(OBJ):
 	mkdir -p $@
@@ -20,15 +23,23 @@ $(OBJ):
 $(BIN):
 	mkdir -p $@
 
-$(OBJ)/%.o: $(SRC)/%.c $(TESTS)/%.c $(OBJS) $(TESTO)
+$(OBJ)/%.o: $(SRC)/%.c $(OBJ)
 	$(CC) $(CFLAGS) $(LIBS) -c $< -o $@
 
-$(BIN)/$(BINS): $(OBJS) $(OBJ) $(BIN)
-	$(CC) $(CFLAGS) $(LIBS) $(OBJS) -o $@ $(LDFLAGS)
+$(BIN)/$(BINS): $(OBJS) $(BIN)
+	$(CC) $(CFLAGS) $(LIBS) -o $@ $(OBJS) $(LDFLAGS)
+
+$(BLD)/$(PKGS): release 
+	tar -czvf $@ $(BIN)/$(BINS)
 
 all:	$(BIN)/$(BINS) 
 
 clean:
-	$(RM) -r $(BIN) $(OBJ) 
+	$(RM) -r $(BIN) $(OBJ)
 
-.PHONY: all clean
+dist:	$(BLD)/$(PKGS)
+
+distclean:
+	$(RM) $(BLD)/$(PKGS)
+
+.PHONY: all clean dist distclean
