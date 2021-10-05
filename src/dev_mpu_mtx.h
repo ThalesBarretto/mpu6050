@@ -3,8 +3,9 @@
 #endif
 
 /* C11 or later required for type-generic macros */
-#if __STDC_VERSION__ >= 201112L
-
+#if __STDC_VERSION__ < 201112L
+#error "Matrix requires C11 or newer"
+#else
 #ifndef MPU_MTX_H_
 #define MPU_MTX_H_
 /*
@@ -692,7 +693,7 @@ void mtxLf_fpr_col(const long double * const A, const int m, int k, FILE *f);
 
 #endif /* MPU_MTX_H_ */
 
-#endif /* __STDC_VERSION__ >= 201112L */
+#endif /* __STDC_VERSION__ < 201112L */
 
 #ifdef __cplusplus
 	}
