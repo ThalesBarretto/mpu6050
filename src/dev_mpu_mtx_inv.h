@@ -6,27 +6,23 @@
 #if __STDC_VERSION__ >= 201112L
 #ifndef MPU_MTX_INV_H_
 #define MPU_MTX_INV_H_
+
+/* This is part of dev_mpu_mtx */
+#include "dev_mpu_mtx.h"
+
 /*
- * MATRIX OPERATIONS
- * Conventions:
- * 	- Types: int, float, double, long double
- * 	- Types are chosen according to the destination argument
- * 	- Do not mix types of A, B and C (unsupported)
- * 	- Matrix dimensions are (nxn),(mxn),(mxp)(pxn)
- * 	- indexes in the loops are'i' for row, 'j' for column
- * 	- A, B operands are not modified, C is modified (C = A*B)
- * 	- operands and destination must not overlap
- * 	- A is modified in-place by "_row_" and "_col_" operations
- *
- * Matrix Inversion:
+ * MATRIX INVERSION
+ * 	- YOU MUST PROVIDE A BUFFER "B"
  * 	- A is the source (not modified)
  * 	- B is the buffer (overwritten)
  * 	- C is the destination (C = A_inverse)
+ * 	- n is the size of A(nxn) and C(nxn)
  * 	- no checks performed (you must provide an invertible matrix)
  * 	- only fails when there is a zero on the pivot
  * 	- returns 0 on success, -1 on failure
  *
- * mtx_inv		Matrix Inversion
+ * Functions:
+ * 	mtx_inv		Matrix Inversion
  */
 
 #define mtx_inv(A, B, n, C)			\
@@ -38,10 +34,10 @@
 	)((A), (B), (n), (C))
 
 /* C(mxn) = A(mxn)_inverse */
-int  mtxi_inv(int *  A, int * B, const int n, int *C);
-int  mtxf_inv(float * A, float * B, const int n, float *C);
-int mtxlf_inv(double * A, double * B, const int n, double *C);
-int mtxLf_inv(long double * A, long double * B, const int n, long double *C);
+int  mtxi_inv(int 		*A, int		 *B, const int n, int		*C);
+int  mtxf_inv(float 		*A, float	 *B, const int n, float		*C);
+int mtxlf_inv(double		*A, double	 *B, const int n, double	*C);
+int mtxLf_inv(long double	*A, long double	 *B, const int n, long double	*C);
 
 #endif /* MPU_MTX_INV_H_ */
 

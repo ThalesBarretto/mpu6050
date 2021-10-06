@@ -19,7 +19,6 @@
 		}							\
 	}
 
-
 #define MTX_CPY								\
 	for (int i = 0; i < m; i++) {					\
 		for (int j = 0; j < n; j++) {				\
@@ -168,7 +167,6 @@
 	for (int i = 0; i < m; i++) {	\
 		a[i][l] /= k;		\
 	}
-
 /* C(mxn)=I will be changed to the zero matrix */
 void mtxi_zer(const int m, const int n, int *C)
 {

@@ -3,6 +3,9 @@
 #include <math.h>
 #include <tgmath.h>
 
+/* Inverts a matrix using the Gauss Jordan method.
+ * returns 0 on success, 1 on failure.
+ */
 #define MTX_INV									\
 int i, j;									\
 for (i = 0; i < n; i++) {							\
@@ -57,10 +60,6 @@ for (iPass = 0; iPass < n; iPass++) {						\
 }										\
 return 1;
 
-/*
- * Inverts a matrix using the Gauss Jordan method.
- * returns 0 on success, 1 on failure.
- */
 int mtxf_inv(float * A, float * B, int n, float *C)
 {
 	float (*a)[n] = (float (*)[n])A;

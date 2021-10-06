@@ -4,10 +4,11 @@
 
 /* C11 or later required for type-generic macros */
 #if __STDC_VERSION__ >= 201112L
+
 #ifndef MPU_MTX_H_
 #define MPU_MTX_H_
 /*
- * MATRIX OPERATIONS
+ * MATRIX OPERATIONS - Generic
  * Conventions:
  * 	- Types: int, float, double, long double
  * 	- Types are chosen according to the destination argument
