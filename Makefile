@@ -39,6 +39,9 @@ clean:
 
 dist:	$(BLD)/$(PKGS)
 
+tags:
+	ctags -R
+
 distclean:
 	$(RM) $(BLD)/$(PKGS)
 
