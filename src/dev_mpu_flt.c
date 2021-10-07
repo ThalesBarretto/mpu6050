@@ -20,43 +20,40 @@ void mpu_ang_init(struct mpu_dev * dev, struct mpu_ang **ang)
 /*  integrate angles from gyro rates */
 static inline void mpu_ang_gyr(struct mpu_ang *base, struct mpu_ang *ang) 
 {
-	/* TODO 
-	 * use the function 
-	 * 	mpu_mtx_rot_ypr_wtp(Phi, Omega, Phi_dot);
-	 */
-	long double Omega[3];
-	long double Phi[3];
-	long double Phi_dot[3] = {0,0,0};
+	long double Omega[3];	// PQR gyro rates
+	long double Phi[3];	// Euler last angles
+	long double Phi_dot[3]; // Euler angle rates
+	long double Phi_inc[3]; // Euler angle increment over period T
+	long double R_old[9];	// Rotation matrix for old attitude
+	long double R_inc[9];	// Rotation matrix for increment
+	long double R_new[9];	// Rotation matrix for new attitude
+	long double Phi_new[3];	// Euler new angles
 
-	/* first, take gyro in body_xyz frame */
-	Omega[0] = d2r(*(ang->dev->Gx));
-	Omega[1] = d2r(*(ang->dev->Gy));
-	Omega[2] = d2r(*(ang->dev->Gz));
-
-	/* second, bring to body_frd frame */
-	Omega[1] *= -1;
-	Omega[2] *= -1; 
-
-	/* third, take last ypr angles */
+	/* 1st, find Omega from gyro */
+	Omega[0] =  d2r(*(ang->dev->Gx));
+	Omega[1] = -d2r(*(ang->dev->Gy));
+	Omega[2] = -d2r(*(ang->dev->Gz));
+	/* 2d, take last ypr angles */
+	//TODO check, do not assume degrees or radians
 	Phi[0] = d2r(base->ean[0]);
 	Phi[1] = d2r(base->ean[1]);
 	Phi[2] = d2r(base->ean[2]);
-
+	/* 3th, find Phi_dot */
 	mtx_rot_ypr_wtp(Phi, Omega, Phi_dot);
-
-	/* assume constant rate */
-	ang->ean[0] = (r2d(Phi_dot[0]) * ang->dev->st);
-	ang->ean[1] = (r2d(Phi_dot[1]) * ang->dev->st);
-	ang->ean[2] = (r2d(Phi_dot[2]) * ang->dev->st);
-	/* add to base */
-	if ((base != NULL) && (base != 0)) {
-		ang->ean[0] += base->ean[0];
-		ang->ean[1] += base->ean[1];
-		ang->ean[2] += base->ean[2];
-	}
-
-	//TODO: find formula for rho
-	//ang->rho = 0;
+	/* 4th, find increment, assume constant rate */
+	mtx_mul_scl(Phi_dot, 3, 1, ang->dev->st, Phi_inc);
+	/* 5th, find rotation matrix for old angles */
+	mtx_rot_ypr_etr(Phi, R_old);
+	/* 6th, find rotation matrix for increment */
+	mtx_rot_ypr_etr(Phi_inc, R_inc);
+	/* 7th, find resulting rotation matrix */
+	mtx_mul(R_inc, R_old, 3,3,3, R_new);
+	/* 8th, find euler angles from new matrix */
+	mtx_rot_ypr_rte(R_new, Phi_new);
+	/* back to radians, just cause... */
+	ang->ean[0] = r2d(Phi_new[0]);
+	ang->ean[1] = r2d(Phi_new[1]);
+	ang->ean[2] = r2d(Phi_new[2]);
 }
 
 /* ASSUME DEGREES - Estimate angles from accel */
