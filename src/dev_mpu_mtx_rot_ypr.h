@@ -15,7 +15,7 @@
 	float*			:  mtxf_rot_ypr_etr,\
 	double*			: mtxlf_rot_ypr_etr,\
 	long double*		: mtxLf_rot_ypr_etr\
-	)((ade),(A),(C))
+	)((A),(C))
 
 #define mtx_rot_ypr_etq(A, C) \
 	_Generic((C),\
