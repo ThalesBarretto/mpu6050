@@ -12,11 +12,17 @@
  *	QTR - Quaternion to rotation matrix
  *	WTP - Body angle rates to Euler angle rates
  *TODO	WTQ - Body angle rates to Quaternions rates
+ *TODO	BTR - body to reference (reverse) Rotation matrix from ypr Euler angles 
+ *TODO	BTQ - body to reference Quaterion from (already reverse) Rotation matrix
+ *TODO	BTE - ypr Euler angles from body to reference (reverse) Rotation matrix
  *TODO	ATE - Accelerometer (stationary) to Euler angle
- *TODO	bTr - express in reference from body (v^r = Cned/frd * v^b)
- *TODO	rTb - express in body from reference (v^b = Cfrd/ned * v^r)
  *
  * References:
+ *  HENDERSON, D. M.  (Eq. 10 ZYX(1,2,3)- 1=yaw,2=pitch,3=roll)
+ *  	M321		(eq. 10) ypr EULER to REVERSE MATRIX
+ *  	q321		(eq. 10) REVERSE MATRIX to REVERSE QUATERNION
+ *  	E321		(eq. 10) REVERSE MATRIX to ypr EULER ANGLES
+ *
  *  JOHSON, et al.
  * 	Cfrd/ned	(eq. 1.3-10) EULER  to MATRIX
  * 	PHI(Cfrd/ned)	(eq. 1.3-11) MATRIX to EULER
@@ -138,6 +144,36 @@
 	C[2] = B[0]*sphi +(B[2]*cphi/cthe);
 
 
+/* BTR - Euler angles to reverse rotation matrix
+ *  HENDERSON: MZYX(3,2,1) (seq. 10)  (1=phi,2=theta,3=psi)
+ */
+#define MTX_ROT_YPR_BTR							\
+	c[0][0] = ( c_psi * c_the );					\
+	c[0][1] = ( s_phi * s_the * c_psi) - ( s_psi * c_phi);		\
+	c[0][2] = ( s_the * c_phi * c_psi) + ( s_phi * s_psi);		\
+	c[1][0] = ( s_psi * c_the );					\
+	c[1][1] = ( s_phi * s_psi * s_the) + ( c_phi * c_psi);		\
+	c[1][2] = (-s_phi * c_psi) + ( s_psi * s_the * c_phi);		\
+	c[2][0] = (-s_the);						\
+	c[2][1] = ( s_phi * c_the);					\
+	c[2][2] = ( c_phi * c_the);
+
+/* BTQ - Euler angles to reverse quaternion
+ *  HENDERSON: MZYX(3,2,1) (seq. 10)  (1=phi,2=theta,3=psi)
+ */
+#define MTX_ROT_YPR_BTQ							\
+	C[0] =  sphi2*sthe2*spsi2 + cphi2*cthe2*cpsi2;			\
+	C[1] = -sphi2*sthe2*cpsi2 + spsi2*cphi2*cthe2;			\
+	C[2] =  sphi2*spsi2*cthe2 + sthe2*cphi2*cpsi2;			\
+	C[3] =  sphi2*cthe2*cpsi2 - sthe2*spsi2*cphi2;
+
+/* BTE - Reverse rotation matrix to Euler angles
+ *  HENDERSON: MZYX(3,2,1) (seq. 10)  (1=phi,2=theta,3=psi)
+ */ 
+#define MTX_ROT_YPR_BTE							\
+	C[0] =   atan( a[1][0]/a[0][0]); 				\
+	C[1] =   atan(-a[2][0]/(sqrt(1- squ(a[2][0]))));		\
+	C[2] =   atan( a[2][1]/a[2][2]);
 
 void  mtxf_rot_ypr_etr(const float * const A,  float *C)
 {
@@ -286,6 +322,85 @@ void mtxLf_rot_ypr_wtp(const long double * const A, const long double * const B,
 	float tthe = tanl(A[1]);
 	MTX_ROT_YPR_WTP;
 }
+void  mtxf_rot_ypr_btr(const float * const A,  float *C)
+{
+	float (*c)[3] = (float (*)[3])C;
+	float s_phi = sinf(A[0]);
+	float c_phi = cosf(A[0]);
+	float s_the = sinf(A[1]);
+	float c_the = cosf(A[1]);
+	float c_psi = cosf(A[2]);
+	float s_psi = sinf(A[2]);
+	MTX_ROT_YPR_BTR;
+}
+void mtxlf_rot_ypr_btr(const double * const  A, double *C)
+{
+	double (*c)[3] = (double (*)[3])C;
+	double s_phi = sin(A[0]);
+	double c_phi = cos(A[0]);
+	double s_the = sin(A[1]);
+	double c_the = cos(A[1]);
+	double c_psi = cos(A[2]);
+	double s_psi = sin(A[2]);
+	MTX_ROT_YPR_BTR;
+}
+void mtxLf_rot_ypr_btr(const long double * const A, long double *C)
+{
+	long double (*c)[3] = (long double (*)[3])C;
+	long double s_phi = sinl(A[0]);
+	long double c_phi = cosl(A[0]);
+	long double s_the = sinl(A[1]);
+	long double c_the = cosl(A[1]);
+	long double c_psi = cosl(A[2]);
+	long double s_psi = sinl(A[2]);
+	MTX_ROT_YPR_BTR;
+}
+void  mtxf_rot_ypr_btq(const float * const A,  float *C)
+{
+	float cphi2 = cosf(A[0]/2);
+	float sphi2 = sinf(A[0]/2);
+	float cthe2 = cosf(A[1]/2);
+	float sthe2 = sinf(A[1]/2);
+	float cpsi2 = cosf(A[2]/2);
+	float spsi2 = sinf(A[2]/2);
+	MTX_ROT_YPR_BTQ;
+}
+void mtxlf_rot_ypr_btq(const double * const  A, double *C)
+{
+	double cphi2 = cos(A[0]/2);
+	double sphi2 = sin(A[0]/2);
+	double cthe2 = cos(A[1]/2);
+	double sthe2 = sin(A[1]/2);
+	double cpsi2 = cos(A[2]/2);
+	double spsi2 = sin(A[2]/2);
+	MTX_ROT_YPR_BTQ;
+}
+void mtxLf_rot_ypr_btq(const long double * const A, long double *C)
+{
+	float cphi2 = cosl(A[0]/2);
+	float sphi2 = sinl(A[0]/2);
+	float cthe2 = cosl(A[1]/2);
+	float sthe2 = sinl(A[1]/2);
+	float cpsi2 = cosl(A[2]/2);
+	float spsi2 = sinl(A[2]/2);
+	MTX_ROT_YPR_BTQ;
+}
+
+void  mtxf_rot_ypr_bte(const float * const A, float *C)
+{
+	float (*a)[3] = (float (*)[3])A;
+	MTX_ROT_YPR_BTE;
+}
+void mtxlf_rot_ypr_bte(const double * const  A, double *C)
+{
+	double (*a)[3] = (double (*)[3])A;
+	MTX_ROT_YPR_BTE;
+}
+void mtxLf_rot_ypr_bte(const long double * const A, long double *C)
+{
+	long double (*a)[3] = (long double (*)[3])A;
+	MTX_ROT_YPR_BTE;
+}
 /* FIXME
  * **** NOTES ****
  *
@@ -343,6 +458,7 @@ void mtxLf_rot_ypr_wtp(const long double * const A, const long double * const B,
  * 
  * -Integrate ypr rates to get final ypr:
  * 	YPR(t) = YPR(0) + int[0,t]{PHI_dot(t)dt} 
+ * 	YPR(t) - YPR(0) = int[0,t]{PHI_dot(t)dt} 
  *
  * 	Assuming discrete time, contant rates, period T...
  * 	YPR_{k} = YPR_{k-1} + T * H(YPR_{k-1) * [P; Q; R]_{k}

@@ -54,6 +54,26 @@
 	long double*		: mtxLf_rot_ypr_wtp\
 	)((A), (B), (C))
 
+#define mtx_rot_ypr_btr(A, C) \
+	_Generic((C),\
+	float*			:  mtxf_rot_ypr_btr,\
+	double*			: mtxlf_rot_ypr_btr,\
+	long double*		: mtxLf_rot_ypr_btr\
+	)((ade),(A),(C))
+
+#define mtx_rot_ypr_btq(A, C) \
+	_Generic((C),\
+	float*			:  mtxf_rot_ypr_btq,\
+	double*			: mtxlf_rot_ypr_btq,\
+	long double*		: mtxLf_rot_ypr_btq\
+	)((A),(C))
+#define mtx_rot_ypr_bte(A, C) \
+	_Generic((C),\
+	float*			:  mtxf_rot_ypr_bte,\
+	double*			: mtxlf_rot_ypr_bte,\
+	long double*		: mtxLf_rot_ypr_bte\
+	)((A),(C))
+
 void  mtxf_rot_ypr_etr(const float 	 * const A, float 	*C);
 void mtxlf_rot_ypr_etr(const double 	 * const A, double 	*C);
 void mtxLf_rot_ypr_etr(const long double * const A, long double *C);
@@ -82,6 +102,17 @@ void  mtxf_rot_ypr_wtp(const float	 * const A, const float	 	 * const B, float	*
 void mtxlf_rot_ypr_wtp(const double 	 * const A, const double 	 * const B, double	*C);
 void mtxLf_rot_ypr_wtp(const long double * const A, const long double 	 * const B, long double *C);
 
+void  mtxf_rot_ypr_btr(const float 	 * const A, float 	*C);
+void mtxlf_rot_ypr_btr(const double 	 * const A, double 	*C);
+void mtxLf_rot_ypr_btr(const long double * const A, long double *C);
+
+void  mtxf_rot_ypr_btq(const float 	 * const A, float 	*C);
+void mtxlf_rot_ypr_btq(const double	 * const A, double 	*C);
+void mtxLf_rot_ypr_btq(const long double * const A, long double *C);
+
+void  mtxf_rot_ypr_bte(const float 	 * const A, float 	*C);
+void mtxlf_rot_ypr_bte(const double 	 * const A, double 	*C);
+void mtxLf_rot_ypr_bte(const long double * const A, long double *C);
 #endif /* MPU_MTX_ROT_YPR_H_ */
 
 #endif /* __STDC_VERSION__ >= 201112L */
