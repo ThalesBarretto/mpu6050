@@ -783,7 +783,7 @@ static int mpu_cfg_parse_PWR_MGMT(struct mpu_dev * dev)
 	if (val2 & STDBY_YG_BIT) { dev->cfg->stdby_yg = true; }
 	if (val2 & STDBY_ZG_BIT) { dev->cfg->stdby_zg = true; }
 
-	double	wake_freq;
+	double	wake_freq = 0;
 	int lp_wake_ctrl = (val2 & 0xC0u) >> 6;
 
 	
