@@ -31,6 +31,9 @@
 #include <math.h>		/* for sin, cos, tan, atan2 etc */
 #include <time.h>		/* for clock_nanosleep */
 
+/* this should be defined in time.h, but the linter complains */
+extern int nanosleep(const struct timespec *rqtp, struct timespec *rmtp);
+
 /*
  * Orientation of Sensor Axis
  *
@@ -160,7 +163,7 @@
 #define EXT_SENS_DATA_04	 77
 #define EXT_SENS_DATA_05	 78
 #define EXT_SENS_DATA_06	 79
-#define EXT_SENS_DATA_07	 70
+#define EXT_SENS_DATA_07	 80
 #define EXT_SENS_DATA_08	 81
 #define EXT_SENS_DATA_09	 82
 #define EXT_SENS_DATA_10	 83
