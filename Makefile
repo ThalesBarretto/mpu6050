@@ -1,5 +1,5 @@
 CC	=gcc
-CFLAGS	=-g -std=gnu17 -O0 -Wall
+CFLAGS	=-g -std=gnu17 -Og -Wall
 
 SRC	=src
 BLD	=bld
@@ -16,6 +16,10 @@ BINS	=mock
 release: CFLAGS=-Wall -O2 -DNDEBUG
 release: clean
 release: $(BIN)/$(BINS)
+
+crazy: CFLAGS=-Wall -Ofast -ftree-vectorize -march=native -mtune=native -DNDEBUG -DHAVE_INLINE -flto
+crazy: clean
+crazy: $(BIN)/$(BINS)
 
 $(OBJ):
 	mkdir -p $@
@@ -40,7 +44,7 @@ clean:
 dist:	$(BLD)/$(PKGS)
 
 tags:
-	ctags -R
+	cd $(SRC) && ctags -R 
 
 distclean:
 	$(RM) $(BLD)/$(PKGS)

@@ -4,3 +4,4 @@ bld
 *.a
 *.vscode
 tags
+src/tags
