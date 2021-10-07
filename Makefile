@@ -1,5 +1,5 @@
 CC	=gcc
-CFLAGS	=-g -std=gnu17 -Og -Wall
+CFLAGS	=-Wall -g -std=gnu17 -Og 
 
 SRC	=src
 BLD	=bld
