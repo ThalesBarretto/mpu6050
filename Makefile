@@ -5,7 +5,7 @@ SRC	=src
 BLD	=bld
 OBJ	=$(BLD)/obj
 BIN	=$(BLD)/bin
-
+PLAY	="/home/pi/play/mpu6050"
 
 LIBS	=-lm -li2c
 SRCS	=$(wildcard	$(SRC)/*.c)
@@ -49,4 +49,9 @@ tags:
 distclean:
 	$(RM) $(BLD)/$(PKGS)
 
-.PHONY: all clean dist distclean
+pi:
+	scp -r $(SRC) pi:$(PLAY)
+	scp  Makefile pi:$(PLAY)
+	ssh  pi 'cd $(PLAY) && $(MAKE) dist'
+
+.PHONY: all clean dist distclean pi
