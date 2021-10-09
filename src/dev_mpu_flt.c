@@ -38,18 +38,14 @@ static inline void mpu_ang_gyr(struct mpu_ang *base, struct mpu_ang *ang)
 	Phi[0] = d2r(base->ean[0]);
 	Phi[1] = d2r(base->ean[1]);
 	Phi[2] = d2r(base->ean[2]);
-	/* 3th, find Phi_dot */
-	mtx_rot_ypr_wtp(Phi, Omega, Phi_dot);
-	/* 4th, find increment, assume constant rate */
-	mtx_mul_scl(Phi_dot, 3, 1, ang->dev->st, Phi_inc);
-	/* 5th, find rotation matrix for old angles */
-	mtx_rot_ypr_etr(Phi, R_old);
-	/* 6th, find rotation matrix for increment */
-	mtx_rot_ypr_etr(Phi_inc, R_inc);
-	/* 7th, find resulting rotation matrix */
-	mtx_mul(R_inc, R_old, 3,3,3, R_new);
-	/* 8th, find euler angles from new matrix */
-	mtx_rot_ypr_rte(R_new, Phi_new);
+
+	mtx_rot_ypr_wtp(Phi, Omega, Phi_dot); 			/*  find Phi_dot */
+	mtx_mul_scl(Phi_dot, 3, 1, ang->dev->st, Phi_inc); 	/*  find increment, assume constant rate */
+	mtx_rot_ypr_etr(Phi, R_old); 				/*  find rotation matrix for old angles */
+	mtx_rot_ypr_etr(Phi_inc, R_inc); 			/*  find rotation matrix for increment */
+	mtx_mul(R_inc, R_old, 3,3,3, R_new); 			/*  find resulting rotation matrix */
+	mtx_rot_ypr_rte(R_new, Phi_new); 			/*  find euler angles from new matrix */
+
 	/* back to radians, just cause... */
 	ang->ean[0] = r2d(Phi_new[0]);
 	ang->ean[1] = r2d(Phi_new[1]);
@@ -114,9 +110,6 @@ void mpu_flt_com_update(struct mpu_flt_dat *flt)
 		/* fuse accel and gyro by complementary filter */
 		flt->anf->ean[0] = (flt->gaa * flt->ana->ean[0]) + (flt->gag * flt->ang->ean[0]);
 		flt->anf->ean[1] = (flt->gaa * flt->ana->ean[1]) + (flt->gag * flt->ang->ean[1]);
-
-		//flt->anf->ean[0] = ((1 - flt->gain) * flt->ana->ean[0]) + (flt->gain * flt->ang->ean[0]);
-		//flt->anf->ean[1] = ((1 - flt->gain) * flt->ana->ean[1]) + (flt->gain * flt->ang->ean[1]);
 	}
 	/* psi angle come only from gyro */
 	flt->anf->ean[2] =  flt->ang->ean[2];
