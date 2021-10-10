@@ -29,7 +29,7 @@
 	float*			:  mtxf_rot_xyz_etq,\
 	double*			: mtxlf_rot_xyz_etq,\
 	long double*		: mtxLf_rot_xyz_etq\
-	)((ade),(A),(C))
+	)(A),(C)
 
 #define mtx_rot_xyz_qte(A, C) \
 	_Generic((C),\

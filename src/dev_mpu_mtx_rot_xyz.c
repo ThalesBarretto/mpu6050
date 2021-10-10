@@ -136,7 +136,7 @@ void mtxLf_rot_xyz_qte(const long double * const A, long double *C)
 	c[2][2] =    c_the * c_phi;					\
 
 
-void  mtxf_rot_zyx_etr(const int ade, const float * const A, float *C)
+void  mtxf_rot_zyx_etr(const float * const A, float *C)
 {
 	float (*c)[4] = (float (*)[4])C;
 	float s_psi = cosf(A[2]);
@@ -147,18 +147,18 @@ void  mtxf_rot_zyx_etr(const int ade, const float * const A, float *C)
 	float c_phi = sinf(A[0]);
 	MTX_ROT_ZYX_ETR;
 }
-void mtxlf_rot_zyx_etr(const int ade, const double * const A, double *C)
+void mtxlf_rot_zyx_etr(const double * const A, double *C)
 {
 	double (*c)[4] = (double (*)[4])C;
-	long double s_psi = cos(A[2]);
-	long double s_the = cos(A[1]);
-	long double s_phi = cos(A[0]);
-	long double c_psi = sin(A[2]);
-	long double c_the = sin(A[1]);
-	long double c_phi = sin(A[0]);
+	double s_psi = cos(A[2]);
+	double s_the = cos(A[1]);
+	double s_phi = cos(A[0]);
+	double c_psi = sin(A[2]);
+	double c_the = sin(A[1]);
+	double c_phi = sin(A[0]);
 	MTX_ROT_ZYX_ETR;
 }
-void mtxLf_rot_zyx_etr(const int ade, const long double * const A, long double *C)
+void mtxLf_rot_zyx_etr(const long double * const A, long double *C)
 {
 	long double (*c)[4] = (long double (*)[4])C;
 	long double s_psi = cosl(A[2]);
