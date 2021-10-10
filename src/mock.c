@@ -1,32 +1,17 @@
-#include "dev_mpu.h"
-#include "dev_mpu_flt.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <getopt.h>
+#include "dev_mpu.h"
+#include "dev_mpu_opt.h"
+#include "dev_mpu_flt.h"
+#include "imu.h"
+#include "imu_get_data_mpu6050.h"
 
-#define MDEBUG printf("%3d %-12s\n", __LINE__, __func__);
+//#define MDEBUG printf("%3d %-12s\n", __LINE__, __func__);
 
-struct  mpu_opt {
-	bool quiet;	/* don't print to console	*/
-	bool cs;	/* set clock source		*/
-	bool dl;	/* set dlpf			*/
-	bool sr;	/* set samplerate		*/
-	bool ar;	/* set accel range		*/
-	bool gr;	/* set gyro range		*/
-	bool ca;	/* calibrate	*/
-	bool re;	/* init reset mode		*/
-	bool du;	/* dump registers		*/
-	bool ne;	/* network start		*/
-	int clksel;	/* clksel value			*/
-	int dlpfv;	/* samplerate value		*/
-	int smprt;	/* samplerate value		*/
-	int a_ran;	/* accel range value		*/
-	int g_ran;	/* gyro range value		*/
-	int c_sam;	/* cal samples value		*/
-	char d_fln[256];/* dump filename		*/
-	char n_hos[256];/* network host			*/
-	char n_por[16];	/* network port			*/
-};
+void mpu_print_all(struct mpu_dev *dev, char *msg, char *buf);
+void mpu_print_data  (struct mpu_dev *dev, int times);
+void mpu_print_bias  (struct mpu_dev *dev);
 
 struct option lopts[] = {
 	{"quiet",	no_argument,		0, 0},
@@ -41,15 +26,6 @@ struct option lopts[] = {
 	{"connect",	required_argument,	0, 0},
 	{0,		0,		   	0, 0},
 };
-
-
-int mpu_opt_get(struct option *lopts, int argc, char **argv, struct mpu_opt *mopts);
-int mpu_opt_set(struct mpu_dev *dev, struct mpu_opt *mopts);
-void mpu_opt_pri(struct mpu_opt *mopts);
-void mpu_print_all(struct mpu_dev *dev, char *msg, char *buf);
-
-void mpu_print_data  (struct mpu_dev *dev, int times);
-void mpu_print_bias  (struct mpu_dev *dev);
 
 int main(int argc, char *argv[])
 {
@@ -79,31 +55,48 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	char *msg = malloc(sizeof(char)*MPU_MAXLINE);
-	char *buf = malloc(sizeof(char)*MPU_MAXLINE);
+	//char *msg = malloc(sizeof(char)*MPU_MAXLINE);
+	//char *buf = malloc(sizeof(char)*MPU_MAXLINE);
+
+	/* The world frame will be inertial */
+	struct frame *fr_world = (struct frame *)calloc(1, sizeof(struct frame)); 
+	fr_world->type = frNED;
+	fr_world->ref  = NULL;
+
+	/* The body frame tracked relative to world */
+	struct frame *fr_body = (struct frame *)calloc(1, sizeof(struct frame)); 
+	fr_body->type = frFRD;
+	fr_body->ref  = fr_world;
+
+	struct IMU *imu_dev = (struct IMU *)calloc(1, sizeof(struct IMU));
+	imu_dev->dev = dev;			/* the driver instance	*/
+	imu_dev->fr  = fr_body;			/* the frame of data	*/
 
 	while(1) {
-		mpu_ctl_fifo_data(dev);
-		mpu_ctl_fix_axis(dev);
-		mpu_flt_com_update(flt);
-		strcat(msg,"\r");
-		mpu_print_all(dev, msg, buf);
-		mpu_ang_pri(flt->anf, msg, buf);
-		strcat(msg,"\n");
+		imu_get_data_mpu6050(imu_dev);
+		imu_estimate(imu_dev);
+		//imu_print_Phi(imu_dev);
+		//mpu_ctl_fifo_data(dev);
+		//mpu_ctl_fix_axis(dev);
+		//mpu_flt_com_update(flt);
+		//strcat(msg,"\r");
+		//mpu_print_all(dev, msg, buf);
+		//mpu_ang_pri(flt->anf, msg, buf);
+		//strcat(msg,"\n");
 
-		if (!mopts->quiet) {
-			printf("%s", msg);
-		}
+		//if (!mopts->quiet) {
+		//	printf("%s", msg);
+		//}
 
-		if (mopts->ne && (sfd >= 0)) {
-			mpu_socket_sendmsg(&sfd, msg);
-		}
+		//if (mopts->ne && (sfd >= 0)) {
+		//	mpu_socket_sendmsg(&sfd, msg);
+		//}
 
-		sprintf(msg,"%s", "");
+		//sprintf(msg,"%s", "");
 	}
 
-	free(msg);
-	free(buf);
+	//free(msg);
+	//free(buf);
 	return 0;
 }
 void mpu_print_all(struct mpu_dev *dev, char *msg, char *buf)
@@ -184,83 +177,3 @@ void mpu_print_bias(struct mpu_dev *dev)
 	printf(" Gz_O=%Lf ", Gz_O);
 }
 
-int mpu_opt_get(struct option *lopts, int argc, char **argv, struct mpu_opt *mopts)
-{
-	int c;
-	int i = 0;
-	while ((c = getopt_long(argc, argv, "", lopts, &i)) != -1) {
-		switch(c) {
-		case 0:
-			if (strcmp(lopts[i].name, "clksel"	) == 0) { mopts->cs = true; sscanf(optarg, "%d", &mopts->clksel); break;}
-			if (strcmp(lopts[i].name, "dlpf"	) == 0) { mopts->dl = true; sscanf(optarg, "%d", &mopts->dlpfv); break;}
-			if (strcmp(lopts[i].name, "rate"	) == 0) { mopts->sr = true; sscanf(optarg, "%d", &mopts->smprt); break;}
-			if (strcmp(lopts[i].name, "arange"	) == 0) { mopts->ar = true; sscanf(optarg, "%d", &mopts->a_ran); break;}
-			if (strcmp(lopts[i].name, "grange"	) == 0) { mopts->gr = true; sscanf(optarg, "%d", &mopts->g_ran); break;}
-			if (strcmp(lopts[i].name, "dump"	) == 0) { mopts->du = true; sscanf(optarg, "%s",  mopts->d_fln); break;}
-			if (strcmp(lopts[i].name, "calibrate"	) == 0) { mopts->ca = true; sscanf(optarg, "%d", &mopts->c_sam); break;}
-			if (strcmp(lopts[i].name, "reset"	) == 0) { mopts->re = true;					 break;}
-			if (strcmp(lopts[i].name, "quiet"	) == 0) { mopts->quiet = true; break;}
-			if (strcmp(lopts[i].name, "connect"	) == 0) { mopts->ne = true; 
-				sscanf(strtok(optarg, ":"), "%s", mopts->n_hos);
-				sscanf(strtok(NULL  , ","), "%s", mopts->n_por);}
-				break;
-		case '?' :
-			fprintf(stderr, "unrecognized option \n");
-			break;
-		default:
-			printf("?? getopt returned character code 0%o ??\n", c);
-		}
-	}
-	if (optind < argc) {
-		printf("non-option ARGV-elements: ");
-		while (optind < argc)
-			printf("%s ", argv[optind++]);
-		printf("\n");
-	}
-
-	return 0;
-}
-
-void mpu_opt_pri(struct mpu_opt *mopts)
-{
-	printf("OPTIONS:\n");
-	printf("CLKSEL:%5s %d\n", (mopts->dl ? "true" : "false"), mopts->dlpfv);
-	printf("DLPF:%5s %d\n", (mopts->dl ? "true" : "false"), mopts->dlpfv);
-	printf("SAMPLING_RATE:%5s %d\n", (mopts->sr ? "true" : "false"), mopts->smprt);
-	printf("ACCEL_FULL_RANGE:%5s %d\n", (mopts->ar ? "true" : "false"), mopts->a_ran);
-	printf("GYRO_FULL_RANGE:%5s %d\n", (mopts->gr ? "true" : "false"), mopts->g_ran);
-	printf("DO_CALIBRATION:%5s %d\n", (mopts->ca ? "true" : "false"), mopts->c_sam);
-	printf("DEVICE_RESET:%5s\n", 	  (mopts->re ? "true" : "false"));
-	printf("DUMP_REGISTERS:%5s %s\n", (mopts->du ? "true" : "false"), mopts->d_fln);
-	printf("NETWORK:%5s host:%s port:%s\n", (mopts->ne ? "true" : "false"), mopts->n_hos, mopts->n_por);
-	printf("\n");
-}
-
-int mpu_opt_set(struct mpu_dev *dev, struct mpu_opt *mopts)
-{
-	if (mopts->re)
-		mpu_ctl_reset(dev);
-
-	if (mopts->cs)
-		mpu_ctl_clocksource(dev, mopts->clksel);	
-
-	if (mopts->dl)
-		mpu_ctl_dlpf(dev, mopts->dlpfv);
-
-	if (mopts->sr)
-		mpu_ctl_samplerate(dev, mopts->smprt);
-
-	if (mopts->ar)
-		mpu_ctl_accel_range(dev, mopts->a_ran);
-
-	if (mopts->gr)
-		mpu_ctl_gyro_range(dev, mopts->g_ran);
-
-	if (mopts->du)
-		mpu_ctl_dump(dev,  mopts->d_fln);
-
-	if (mopts->ca)
-		mpu_ctl_calibration(dev);
-
-	return 0;
-}

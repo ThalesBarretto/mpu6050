@@ -1,5 +1,33 @@
 CC	=gcc
-CFLAGS	=-Wall -g -std=gnu17 -Og 
+#	-Wsign-conversion\
+	 -Wsign-conversion \
+
+WFLAGS	=-Wall \
+	 -Wextra \
+	 -Wpedantic \
+	 -Wsuggest-attribute=pure \
+	 -Wsuggest-attribute=const \
+	 -Wsuggest-attribute=noreturn \
+	 -Wsuggest-attribute=cold \
+	 -Wsuggest-attribute=malloc \
+	 -Wsuggest-attribute=format \
+	 -Wmissing-noreturn \
+	 -Wmissing-format-attribute \
+	 -Wtrampolines \
+	 -Wno-system-headers \
+	 -Wshadow \
+	 -Wundef \
+	 -Wexpansion-to-defined \
+	 -Wunused-macros \
+	 -Wbad-function-cast \
+	 -Wcast-align \
+	 -Wdangling-else \
+	 -Wlogical-op \
+	 -Wsign-compare \
+	 -Wfloat-conversion \
+	 -Wlogical-not-parentheses 
+
+CFLAGS	=
 
 SRC	=src
 BLD	=bld
@@ -13,11 +41,11 @@ OBJS	=$(patsubst	$(SRC)/%.c,$(OBJ)/%.o, $(SRCS))
 PKGS	=$(patsubst	$(BINS),$(BINS).tar.gz,$(BINS))
 BINS	=mock
 
-release: CFLAGS=-Wall -O2 -DNDEBUG
+release: CFLAGS=-O2 -DNDEBUG
 release: clean
 release: $(BIN)/$(BINS)
 
-crazy: CFLAGS=-Wall -Ofast -ftree-vectorize -march=native -mtune=native -DNDEBUG -DHAVE_INLINE -flto
+crazy: CFLAGS=-Ofast -ftree-vectorize -march=native -mtune=native -DNDEBUG -DHAVE_INLINE -flto
 crazy: clean
 crazy: $(BIN)/$(BINS)
 
@@ -28,10 +56,10 @@ $(BIN):
 	mkdir -p $@
 
 $(OBJ)/%.o: $(SRC)/%.c $(OBJ)
-	$(CC) $(CFLAGS) $(LIBS) -c $< -o $@
+	$(CC) $(WFLAGS) $(CFLAGS) $(LIBS) -c $< -o $@
 
 $(BIN)/$(BINS): $(OBJS) $(BIN)
-	$(CC) $(CFLAGS) $(LIBS) -o $@ $(OBJS) $(LDFLAGS)
+	$(CC) $(WFLAGS) $(CFLAGS) $(LIBS) -o $@ $(OBJS) $(LDFLAGS)
 
 $(BLD)/$(PKGS): release 
 	tar -czvf $@ $(BIN)/$(BINS)
