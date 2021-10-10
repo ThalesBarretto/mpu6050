@@ -99,15 +99,15 @@
 void  mtxf_rot_rvx(const float q, float *C)
 {
 	float (*c)[3] = (float (*)[3])C;
-	float cq = cos(q);
-	float sq = sin(q);
+	float cq = cosf(q);
+	float sq = sinf(q);
 	MTX_ROT_RVX;
 }
 void mtxlf_rot_rvx(const double q, double *C)
 {
 	double (*c)[3] = (double (*)[3])C;
-	double cq = cosl(q);
-	double sq = sinl(q);
+	double cq = cos(q);
+	double sq = sin(q);
 	MTX_ROT_RVX;
 }
 void mtxLf_rot_rvx(const long double q, long double *C)
@@ -120,15 +120,15 @@ void mtxLf_rot_rvx(const long double q, long double *C)
 void  mtxf_rot_rvy(const float q, float *C)
 {
 	float (*c)[3] = (float (*)[3])C;
-	float cq = cos(q);
-	float sq = sin(q);
+	float cq = cosf(q);
+	float sq = sinf(q);
 	MTX_ROT_RVY;
 }
 void mtxlf_rot_rvy(const double q, double *C)
 {
 	double (*c)[3] = (double (*)[3])C;
-	double cq = cosl(q);
-	double sq = sinl(q);
+	double cq = cos(q);
+	double sq = sin(q);
 	MTX_ROT_RVY;
 }
 void mtxLf_rot_rvy(const long double q, long double *C)
@@ -141,8 +141,8 @@ void mtxLf_rot_rvy(const long double q, long double *C)
 void  mtxf_rot_rvz(const float q, float *C)
 {
 	float (*c)[3] = (float (*)[3])C;
-	float cq = cos(q);
-	float sq = sin(q);
+	float cq = cosf(q);
+	float sq = sinf(q);
 	MTX_ROT_RVZ;
 }
 void mtxlf_rot_rvz(const double q, double *C)
@@ -163,15 +163,15 @@ void mtxLf_rot_rvz(const long double q, long double *C)
 void  mtxf_rot_rfx(const float q, float *C)
 {
 	float (*c)[3] = (float (*)[3])C;
-	float cq = cos(q);
-	float sq = sin(q);
+	float cq = cosf(q);
+	float sq = sinf(q);
 	MTX_ROT_RFX;
 }
 void mtxlf_rot_rfx(const double q, double *C)
 {
 	double (*c)[3] = (double (*)[3])C;
-	double cq = cosl(q);
-	double sq = sinl(q);
+	double cq = cos(q);
+	double sq = sin(q);
 	MTX_ROT_RFX;
 }
 void mtxLf_rot_rfx(const long double q, long double *C)
@@ -184,15 +184,15 @@ void mtxLf_rot_rfx(const long double q, long double *C)
 void  mtxf_rot_rfy(const float q, float *C)
 {
 	float (*c)[3] = (float (*)[3])C;
-	float cq = cos(q);
-	float sq = sin(q);
+	float cq = cosf(q);
+	float sq = sinf(q);
 	MTX_ROT_RFY;
 }
 void mtxlf_rot_rfy(const double q, double *C)
 {
 	double (*c)[3] = (double (*)[3])C;
-	double cq = cosl(q);
-	double sq = sinl(q);
+	double cq = cos(q);
+	double sq = sin(q);
 	MTX_ROT_RFY;
 }
 void mtxLf_rot_rfy(const long double q, long double *C)
@@ -205,8 +205,8 @@ void mtxLf_rot_rfy(const long double q, long double *C)
 void  mtxf_rot_rfz(const float q, float *C)
 {
 	float (*c)[3] = (float (*)[3])C;
-	float cq = cos(q);
-	float sq = sin(q);
+	float cq = cosf(q);
+	float sq = sinf(q);
 	MTX_ROT_RFZ;
 }
 void mtxlf_rot_rfz(const double q, double *C)
