@@ -12,11 +12,6 @@
 #include <math.h>
 #include <tgmath.h>
 
-/* unit converion in extra precision */
-#define PI (3.1415926535897932384L)
-#define r2d(q) ((q)*(180.0L/PI)) 
-#define d2r(q) ((q)*(PI/180.0L)) 
-#define squ(x) ((x)*(x)) 
 
 /*
  * MATRIX ROTATIONS - Generic 
@@ -37,7 +32,6 @@
  *	d2r(q)	degrees to radians
  *	squ(x)	square squ(x)=x²
  */
-
 #define mtx_rot_rvx(q, C) \
 	_Generic((C),\
 	float*			:  mtxf_rot_rvx,\
@@ -123,6 +117,52 @@ void mtxLf_rot_cpm(const long double    * const A, long double	*C);
 void  mtxf_rot_cp2(const float 		* const A, float	*C);
 void mtxlf_rot_cp2(const double 	* const A, double	*C);
 void mtxLf_rot_cp2(const long double    * const A, long double	*C);
+
+/* helpers */
+#define squ(x) ((x)*(x))
+static const float  		mtx_rot_r2df	= (float)(180./M_PI);
+static const double  		mtx_rot_r2dl 	= 	 (180./M_PI);
+static const long double	mtx_rot_r2dLf	= 	(180.L/M_PI);
+static const float  		mtx_rot_d2rf	= (float)(M_PI/180.);
+static const double  		mtx_rot_d2rl 	= 	 (M_PI/180. );
+static const long double	mtx_rot_d2rLf	= 	 (M_PI/180.L);
+#define r2d(q)  _Generic((q),	 \
+	float		:  r2df, \
+	double		: r2dlf, \
+	long double	: r2dLf  \
+	)(q)
+
+#define d2r(q) _Generic((q),	 \
+	float		:  d2rf, \
+	double		: d2rlf, \
+	long double	: d2rLf  \
+	)(q)
+static inline float   __attribute__((always_inline)) d2rf(const float q)
+{
+	return q * mtx_rot_d2rf;
+}
+static inline double   __attribute__((always_inline)) d2rlf(const double q)
+{
+	return q * mtx_rot_d2rl;
+}
+static inline long double   __attribute__((always_inline)) d2rLf(const long double q)
+{
+	return q * mtx_rot_d2rLf;
+}
+
+static inline float   __attribute__((always_inline)) r2df(const float q)
+{
+	return q * mtx_rot_r2df;
+}
+static inline double   __attribute__((always_inline)) r2dlf(const double q)
+{
+	return q * mtx_rot_r2dl;
+}
+
+static inline long double   __attribute__((always_inline)) r2dLf(const long double q)
+{
+	return q * mtx_rot_r2dLf;
+}
 
 #endif /* MPU_MTX_ROT_H_ */
 
