@@ -59,7 +59,7 @@
 	float*			:  mtxf_rot_ypr_btr,\
 	double*			: mtxlf_rot_ypr_btr,\
 	long double*		: mtxLf_rot_ypr_btr\
-	)((ade),(A),(C))
+	),(A),(C)
 
 #define mtx_rot_ypr_btq(A, C) \
 	_Generic((C),\
