@@ -269,7 +269,7 @@ mpu_init_error:
 		exit(EXIT_FAILURE);
 
 	return -1;
-};
+}
 
 
 static int mpu_cfg_recover (struct mpu_dev * dev)
@@ -1201,7 +1201,7 @@ int mpu_dat_reset(struct mpu_dev * dev)
 		return -1;
 
 	int i;
-	size_t len = (sizeof(dev->dat->scl)/sizeof(mpu_data_t));
+	ssize_t len = (sizeof(dev->dat->scl)/sizeof(mpu_data_t));
 
 	for(i = 1; i < len; i++) {
 		dev->dat->scl[i] = 1;
@@ -1300,7 +1300,7 @@ int mpu_cal_reset(struct mpu_dev * dev)
 		return -1;
 
 	int i = 0;
-	size_t len = (sizeof(dev->cal->off)/sizeof(mpu_data_t));
+	ssize_t len = (sizeof(dev->cal->off)/sizeof(mpu_data_t));
 	for (i = 0; i < len; i++) {
 		dev->cal->gai[i] = 1;
 		dev->cal->off[i] = 0;
@@ -1450,22 +1450,22 @@ int mpu_diagnose(struct mpu_dev * dev)
 	printf("%-20s %d\n","raw[0]"		, dev->dat->raw[0] );
 	printf("----------------------------------------\n");
 	printf("ADDRESSES:\n");
-	printf("dat[1](%p) Ax=%p\n", dev->dat->dat[1], dev->Ax);
-	printf("dat[2](%p) Ay=%p\n", dev->dat->dat[2], dev->Ay);
-	printf("dat[3](%p) Az=%p\n", dev->dat->dat[3], dev->Az);
-	printf("dat[4](%p) t =%p\n", dev->dat->dat[4], dev->t);
-	printf("dat[5](%p) Gx=%p\n", dev->dat->dat[5], dev->Gx);
-	printf("dat[6](%p) Gy=%p\n", dev->dat->dat[6], dev->Gy);
-	printf("dat[7](%p) Gz=%p\n", dev->dat->dat[7], dev->Gz);
+	printf("dat[1](%p) Ax=%p\n", (void *)dev->dat->dat[1], (void *)dev->Ax);
+	printf("dat[2](%p) Ay=%p\n", (void *)dev->dat->dat[2], (void *)dev->Ay);
+	printf("dat[3](%p) Az=%p\n", (void *)dev->dat->dat[3], (void *)dev->Az);
+	printf("dat[4](%p) t =%p\n", (void *)dev->dat->dat[4], (void *)dev->t);
+	printf("dat[5](%p) Gx=%p\n", (void *)dev->dat->dat[5], (void *)dev->Gx);
+	printf("dat[6](%p) Gy=%p\n", (void *)dev->dat->dat[6], (void *)dev->Gy);
+	printf("dat[7](%p) Gz=%p\n", (void *)dev->dat->dat[7], (void *)dev->Gz);
 	printf("----------------------------------------\n");
 	printf("ADDRESSES:\n");
-	printf("squ[1](%p) Ax=%p\n", &dev->dat->squ[1], dev->Ax2);
-	printf("squ[2](%p) Ay=%p\n", &dev->dat->squ[2], dev->Ay2);
-	printf("squ[3](%p) Az=%p\n", &dev->dat->squ[3], dev->Az2);
-	printf("squ[4](%p) t =%p\n", &dev->dat->squ[4], dev->t);
-	printf("squ[5](%p) Gx=%p\n", &dev->dat->squ[5], dev->Gx2);
-	printf("squ[6](%p) Gy=%p\n", &dev->dat->squ[6], dev->Gy2);
-	printf("squ[7](%p) Gz=%p\n", &dev->dat->squ[7], dev->Gz2);
+	printf("squ[1](%p) Ax=%p\n", (void *)&dev->dat->squ[1], (void *)dev->Ax2);
+	printf("squ[2](%p) Ay=%p\n", (void *)&dev->dat->squ[2], (void *)dev->Ay2);
+	printf("squ[3](%p) Az=%p\n", (void *)&dev->dat->squ[3], (void *)dev->Az2);
+	printf("squ[4](%p) t =%p\n", (void *)&dev->dat->squ[4], (void *)dev->t);
+	printf("squ[5](%p) Gx=%p\n", (void *)&dev->dat->squ[5], (void *)dev->Gx2);
+	printf("squ[6](%p) Gy=%p\n", (void *)&dev->dat->squ[6], (void *)dev->Gy2);
+	printf("squ[7](%p) Gz=%p\n", (void *)&dev->dat->squ[7], (void *)dev->Gz2);
 	printf("----------------------------------------\n");
 	printf("SCALING:\n");
 	printf("scl[1](%lf) %lf\n", dev->dat->scl[1], 1/dev->albs);
