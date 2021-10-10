@@ -83,31 +83,31 @@
 	switch (form) {									\
 		case 0:	/* form 0  (eq. 141)	*/					\
 			rterm = sqrt(1+ a[0][0] + a[1][1] + a[2][2]);			\
-			C[0] = 			   (rterm)/2.L;				\
-			C[1] = ((a[1][2] - a[2][1])/rterm)/2.L;				\
-			C[2] = ((a[2][0] - a[0][2])/rterm)/2.L;				\
-			C[3] = ((a[0][1] - a[1][0])/rterm)/2.L;				\
+			C[0] = 			   (rterm)/two;				\
+			C[1] = ((a[1][2] - a[2][1])/rterm)/two;				\
+			C[2] = ((a[2][0] - a[0][2])/rterm)/two;				\
+			C[3] = ((a[0][1] - a[1][0])/rterm)/two;				\
 			break;								\
 		case 1:	/* form 1 (eq. 142)	*/					\
 			rterm = sqrt(1+ a[0][0] - a[1][1] - a[2][2]);			\
-			C[0] = ((a[1][2] - a[2][1])/rterm)/2.L;				\
-			C[1] = 			   (rterm)/2.L;				\
-			C[2] = ((a[0][1] + a[1][0])/rterm)/2.L;				\
-			C[3] = ((a[2][0] + a[0][2])/rterm)/2.L;				\
+			C[0] = ((a[1][2] - a[2][1])/rterm)/two;				\
+			C[1] = 			   (rterm)/two;				\
+			C[2] = ((a[0][1] + a[1][0])/rterm)/two;				\
+			C[3] = ((a[2][0] + a[0][2])/rterm)/two;				\
 			break;								\
 		case 2:	/* form 2 (eq. 143)	*/					\
 			rterm = sqrt(1- a[0][0] + a[1][1] - a[2][2]); 			\
-			C[0] = ((a[2][0] - a[0][2])/rterm)/2.L;				\
-			C[1] = ((a[0][1] + a[1][0])/rterm)/2.L;				\
-			C[2] = 			   (rterm)/2.L;				\
-			C[3] = ((a[1][2] + a[2][1])/rterm)/2.L;				\
+			C[0] = ((a[2][0] - a[0][2])/rterm)/two;				\
+			C[1] = ((a[0][1] + a[1][0])/rterm)/two;				\
+			C[2] = 			   (rterm)/two;				\
+			C[3] = ((a[1][2] + a[2][1])/rterm)/two;				\
 			break;								\
 		case 3:	/* form 3 (eq. 144)	*/					\
 			rterm = sqrt(1- a[0][0] - a[1][1] + a[2][2]); 			\
-			C[0] = ((a[0][1] - a[1][0])/rterm)/2.L;				\
-			C[1] = ((a[2][0] + a[0][2])/rterm)/2.L;				\
-			C[2] = ((a[1][2] + a[2][1])/rterm)/2.L;				\
-			C[3] = 			   (rterm)/2.L;				\
+			C[0] = ((a[0][1] - a[1][0])/rterm)/two;				\
+			C[1] = ((a[2][0] + a[0][2])/rterm)/two;				\
+			C[2] = ((a[1][2] + a[2][1])/rterm)/two;				\
+			C[3] = 			   (rterm)/two;				\
 			break;								\
 	}
 
@@ -182,8 +182,8 @@ void  mtxf_rot_ypr_etr(const float * const A,  float *C)
 	float c_phi = cosf(A[0]);
 	float s_the = sinf(A[1]);
 	float c_the = cosf(A[1]);
-	float c_psi = cosf(A[2]);
 	float s_psi = sinf(A[2]);
+	float c_psi = cosf(A[2]);
 	MTX_ROT_YPR_ETR;
 }
 void mtxlf_rot_ypr_etr(const double * const  A, double *C)
@@ -193,8 +193,8 @@ void mtxlf_rot_ypr_etr(const double * const  A, double *C)
 	double c_phi = cos(A[0]);
 	double s_the = sin(A[1]);
 	double c_the = cos(A[1]);
-	double c_psi = cos(A[2]);
 	double s_psi = sin(A[2]);
+	double c_psi = cos(A[2]);
 	MTX_ROT_YPR_ETR;
 }
 void mtxLf_rot_ypr_etr(const long double * const A, long double *C)
@@ -230,12 +230,12 @@ void mtxlf_rot_ypr_etq(const double * const  A, double *C)
 }
 void mtxLf_rot_ypr_etq(const long double * const A, long double *C)
 {
-	float cphi2 = cosl(A[0]/2);
-	float sphi2 = sinl(A[0]/2);
-	float cthe2 = cosl(A[1]/2);
-	float sthe2 = sinl(A[1]/2);
-	float cpsi2 = cosl(A[2]/2);
-	float spsi2 = sinl(A[2]/2);
+	long double cphi2 = cosl(A[0]/2);
+	long double sphi2 = sinl(A[0]/2);
+	long double cthe2 = cosl(A[1]/2);
+	long double sthe2 = sinl(A[1]/2);
+	long double cpsi2 = cosl(A[2]/2);
+	long double spsi2 = sinl(A[2]/2);
 	MTX_ROT_YPR_ETQ;
 }
 void  mtxf_rot_ypr_rte(const float * const A, float *C)
@@ -257,19 +257,25 @@ void  mtxf_rot_ypr_rtq(const float * const A, float *C)
 {
 	float (*a)[3] = (float (*)[3])A;
 	float rterm = 0.f;
+#define two 2.f;
 	MTX_ROT_YPR_RTQ;
+#undef two
 }
 void mtxlf_rot_ypr_rtq(const double * const  A, double *C)
 {
 	double (*a)[3] = (double (*)[3])A;
 	double rterm = 0.;
+#define two 2.;
 	MTX_ROT_YPR_RTQ;
+#undef two
 }
 void mtxLf_rot_ypr_rtq(const long double * const A, long double *C)
 {
 	long double (*a)[3] = (long double (*)[3])A;
 	long double rterm = 0.L;
+#define two 2.L;
 	MTX_ROT_YPR_RTQ;
+#undef two
 }
 void  mtxf_rot_ypr_qte(const float * const A, float *C)
 {
@@ -308,18 +314,18 @@ void  mtxf_rot_ypr_wtp(const float * const A,  const float * const B, float *C)
 }
 void mtxlf_rot_ypr_wtp(const double * const  A, const double * const B,  double *C)
 {
-	float sphi = sin(A[0]);
-	float cphi = cos(A[0]);
-	float cthe = cos(A[1]);
-	float tthe = tan(A[1]);
+	double sphi = sin(A[0]);
+	double cphi = cos(A[0]);
+	double cthe = cos(A[1]);
+	double tthe = tan(A[1]);
 	MTX_ROT_YPR_WTP;
 }
 void mtxLf_rot_ypr_wtp(const long double * const A, const long double * const B, long double *C)
 {
-	float sphi = sinl(A[0]);
-	float cphi = cosl(A[0]);
-	float cthe = cosl(A[1]);
-	float tthe = tanl(A[1]);
+	long double sphi = sinl(A[0]);
+	long double cphi = cosl(A[0]);
+	long double cthe = cosl(A[1]);
+	long double tthe = tanl(A[1]);
 	MTX_ROT_YPR_WTP;
 }
 void  mtxf_rot_ypr_btr(const float * const A,  float *C)
@@ -377,12 +383,12 @@ void mtxlf_rot_ypr_btq(const double * const  A, double *C)
 }
 void mtxLf_rot_ypr_btq(const long double * const A, long double *C)
 {
-	float cphi2 = cosl(A[0]/2);
-	float sphi2 = sinl(A[0]/2);
-	float cthe2 = cosl(A[1]/2);
-	float sthe2 = sinl(A[1]/2);
-	float cpsi2 = cosl(A[2]/2);
-	float spsi2 = sinl(A[2]/2);
+	long double cphi2 = cosl(A[0]/2);
+	long double sphi2 = sinl(A[0]/2);
+	long double cthe2 = cosl(A[1]/2);
+	long double sthe2 = sinl(A[1]/2);
+	long double cpsi2 = cosl(A[2]/2);
+	long double spsi2 = sinl(A[2]/2);
 	MTX_ROT_YPR_BTQ;
 }
 
