@@ -213,106 +213,106 @@ void mtxLf_eye(const int m, const int n, long double *C)
 
 void mtxi_cpy(const int * const A, const int m, const int n, int *C)
 {
-	int (*a)[n] = (int (*)[n])A;
+	const int (*a)[n] = (const int (*)[n])A;
 	int (*c)[n] = (int (*)[n])C;
 	MTX_CPY;
 }
 void mtxf_cpy(const float * A, const int m, const int n, float *C)
 {
-	float (*a)[n] = (float (*)[n])A;
+	const float (*a)[n] = (const float (*)[n])A;
 	float (*c)[n] = (float (*)[n])C;
 	MTX_CPY;
 }
 void mtxlf_cpy(const double * A, const int m, const int n, double *C)
 {
-	double (*a)[n] = (double (*)[n])A;
+	const double (*a)[n] = (const double (*)[n])A;
 	double (*c)[n] = (double (*)[n])C;
 	MTX_CPY;
 }
 void mtxLf_cpy(const long double * A, const int m, const int n, long double *C)
 {
-	long double (*a)[n] = (long double (*)[n])A;
+	const long double (*a)[n] = (const long double (*)[n])A;
 	long double (*c)[n] = (long double (*)[n])C;
 	MTX_CPY;
 }
 
 void mtxi_trn(const int * const A, const int m, const int n, int *C)
 {
-	int (*a)[n] = (int (*)[n])A;
+	const int (*a)[n] = (const int (*)[n])A;
 	int (*c)[n] = (int (*)[n])C;
 	MTX_TRN;
 }
 void mtxf_trn(const float * A, const int m, const int n, float *C)
 {
-	float (*a)[n] = (float (*)[n])A;
+	const float (*a)[n] = (const float (*)[n])A;
 	float (*c)[n] = (float (*)[n])C;
 	MTX_TRN;
 }
 void mtxlf_trn(const double * A, const int m, const int n, double *C)
 {
-	double (*a)[n] = (double (*)[n])A;
+	const double (*a)[n] = (const double (*)[n])A;
 	double (*c)[n] = (double (*)[n])C;
 	MTX_TRN;
 }
 void mtxLf_trn(const long double * A, const int m, const int n, long double *C)
 {
-	long double (*a)[n] = (long double (*)[n])A;
+	const long double (*a)[n] = (const long double (*)[n])A;
 	long double (*c)[n] = (long double (*)[n])C;
 	MTX_TRN;
 }
 void mtxi_add(const int * const A, const int * const B, const int m, const int n, int *C)
 {
-	int (*a)[n] = (int (*)[n])A;
-	int (*b)[n] = (int (*)[n])B;
+	const int (*a)[n] = (const int (*)[n])A;
+	const int (*b)[n] = (const int (*)[n])B;
 	int (*c)[n] = (int (*)[n])C;
 	MTX_ADD;
 }
 void mtxf_add(const float * A, const float * B, const int m, const int n, float *C)
 {
-	float (*a)[n] = (float (*)[n])A;
-	float (*b)[n] = (float (*)[n])B;
+	const float (*a)[n] = (const float (*)[n])A;
+	const float (*b)[n] = (const float (*)[n])B;
 	float (*c)[n] = (float (*)[n])C;
 	MTX_ADD;
 }
 void mtxlf_add(const double * A, const double * B, const int m, const int n, double *C)
 {
-	double (*a)[n] = (double (*)[n])A;
-	double (*b)[n] = (double (*)[n])B;
+	const double (*a)[n] = (const double (*)[n])A;
+	const double (*b)[n] = (const double (*)[n])B;
 	double (*c)[n] = (double (*)[n])C;
 	MTX_ADD;
 }
 void mtxLf_add(const long double * A, const long double * B, const int m, const int n, long double *C)
 {
-	long double (*a)[n] = (long double (*)[n])A;
-	long double (*b)[n] = (long double (*)[n])B;
+	const long double (*a)[n] = (const long double (*)[n])A;
+	const long double (*b)[n] = (const long double (*)[n])B;
 	long double (*c)[n] = (long double (*)[n])C;
 	MTX_ADD;
 }
 void mtxi_sub(const int * const A, const int * const B, const int m, const int n, int *C)
 {
-	int (*a)[n] = (int (*)[n])A;
-	int (*b)[n] = (int (*)[n])B;
+	const int (*a)[n] = (const int (*)[n])A;
+	const int (*b)[n] = (const int (*)[n])B;
 	int (*c)[n] = (int (*)[n])C;
 	MTX_SUB;
 }
 void mtxf_sub(const float * A, const float * B, const int m, const int n, float *C)
 {
-	float (*a)[n] = (float (*)[n])A;
-	float (*b)[n] = (float (*)[n])B;
+	const float (*a)[n] = (const float (*)[n])A;
+	const float (*b)[n] = (const float (*)[n])B;
 	float (*c)[n] = (float (*)[n])C;
 	MTX_SUB;
 }
 void mtxlf_sub(const double * A, const double * B, const int m, const int n, double *C)
 {
-	double (*a)[n] = (double (*)[n])A;
-	double (*b)[n] = (double (*)[n])B;
+	const double (*a)[n] = (const double (*)[n])A;
+	const double (*b)[n] = (const double (*)[n])B;
 	double (*c)[n] = (double (*)[n])C;
 	MTX_SUB;
 }
 void mtxLf_sub(const long double * A, const long double * B, const int m, const int n, long double *C)
 {
-	long double (*a)[n] = (long double (*)[n])A;
-	long double (*b)[n] = (long double (*)[n])B;
+	const long double (*a)[n] = (const long double (*)[n])A;
+	const long double (*b)[n] = (const long double (*)[n])B;
 	long double (*c)[n] = (long double (*)[n])C;
 	MTX_SUB;
 }
@@ -320,29 +320,29 @@ void mtxLf_sub(const long double * A, const long double * B, const int m, const 
 /* C(mxn) = A(mxp) * B(pxn) */
 void mtxi_mul(const int * const A, const int * const B, const int m, const int p, const int n, int *C)
 {
-	int (*a)[p] = (int (*)[p])A;
-	int (*b)[n] = (int (*)[n])B;
+	const int (*a)[p] = (const int (*)[p])A;
+	const int (*b)[n] = (const int (*)[n])B;
 	int (*c)[n] = (int (*)[n])C;
 	MTX_MUL;
 }
 void mtxf_mul(const float * A, const float * B, const int m, const int p, const int n, float *C)
 {
-	float (*a)[p] = (float (*)[p])A;
-	float (*b)[n] = (float (*)[n])B;
+	const float (*a)[p] = (const float (*)[p])A;
+	const float (*b)[n] = (const float (*)[n])B;
 	float (*c)[n] = (float (*)[n])C;
 	MTX_MUL;
 }
 void mtxlf_mul(const double * A, const double * B, const int m, const int p, const int n, double *C)
 {
-	double (*a)[p] = (double (*)[p])A;
-	double (*b)[n] = (double (*)[n])B;
+	const double (*a)[p] = (const double (*)[p])A;
+	const double (*b)[n] = (const double (*)[n])B;
 	double (*c)[n] = (double (*)[n])C;
 	MTX_MUL;
 }
 void mtxLf_mul(const long double * A, const long double * B, const int m, const int p, const int n, long double *C)
 {
-	long double (*a)[p] = (long double (*)[p])A;
-	long double (*b)[n] = (long double (*)[n])B;
+	const long double (*a)[p] = (const long double (*)[p])A;
+	const long double (*b)[n] = (const long double (*)[n])B;
 	long double (*c)[n] = (long double (*)[n])C;
 	MTX_MUL;
 }
@@ -350,25 +350,25 @@ void mtxLf_mul(const long double * A, const long double * B, const int m, const 
 /* C(mxn) = A(mxn) + k*J(mxn)	Multiply each element of A(mxn) by constant k */
 void  mtxi_add_scl(const int * const A,  const int m, const int n, int k, int *C)
 {
-	int (*a)[n] = (int (*)[n])A;
+	const int (*a)[n] = (const int (*)[n])A;
 	int (*c)[n] = (int (*)[n])C;
 	MTX_ADD_SCL;
 }
 void  mtxf_add_scl(const float * const A, const int m, const int n, float k, float *C)
 {
-	float (*a)[n] = (float (*)[n])A;
+	const float (*a)[n] = (const float (*)[n])A;
 	float (*c)[n] = (float (*)[n])C;
 	MTX_ADD_SCL;
 }
 void mtxlf_add_scl(const double * const A, const int m, const int n, double k, double *C)
 {
-	double (*a)[n] = (double (*)[n])A;
+	const double (*a)[n] = (const double (*)[n])A;
 	double (*c)[n] = (double (*)[n])C;
 	MTX_ADD_SCL;
 }
 void mtxLf_add_scl(const long double * const A, const int m, const int n, long double k, long double *C)
 {
-	long double (*a)[n] = (long double (*)[n])A;
+	const long double (*a)[n] = (const long double (*)[n])A;
 	long double (*c)[n] = (long double (*)[n])C;
 	MTX_ADD_SCL;
 }
@@ -376,25 +376,25 @@ void mtxLf_add_scl(const long double * const A, const int m, const int n, long d
 /* C(mxn) = A(mxn) - k*J(mxn)	Subtract constant k from each element of A(mxn) */
 void  mtxi_sub_scl(const int * const A,  const int m, const int n, int k, int *C)
 {
-	int (*a)[n] = (int (*)[n])A;
+	const int (*a)[n] = (const int (*)[n])A;
 	int (*c)[n] = (int (*)[n])C;
 	MTX_SUB_SCL;
 }
 void  mtxf_sub_scl(const float * const A, const int m, const int n, float k, float *C)
 {
-	float (*a)[n] = (float (*)[n])A;
+	const float (*a)[n] = (const float (*)[n])A;
 	float (*c)[n] = (float (*)[n])C;
 	MTX_SUB_SCL;
 }
 void mtxlf_sub_scl(const double * const A, const int m, const int n, double k, double *C)
 {
-	double (*a)[n] = (double (*)[n])A;
+	const double (*a)[n] = (const double (*)[n])A;
 	double (*c)[n] = (double (*)[n])C;
 	MTX_SUB_SCL;
 }
 void mtxLf_sub_scl(const long double * const A, const int m, const int n, long double k, long double *C)
 {
-	long double (*a)[n] = (long double (*)[n])A;
+	const long double (*a)[n] = (const long double (*)[n])A;
 	long double (*c)[n] = (long double (*)[n])C;
 	MTX_SUB_SCL;
 }
@@ -402,25 +402,25 @@ void mtxLf_sub_scl(const long double * const A, const int m, const int n, long d
 /* C(mxn) = A(mxp) * k*J(mxn)	Multiply each element of A(mxn) by constant k */
 void  mtxi_mul_scl(const int * const A,  const int m, const int n, int k, int *C)
 {
-	int (*a)[n] = (int (*)[n])A;
+	const int (*a)[n] = (const int (*)[n])A;
 	int (*c)[n] = (int (*)[n])C;
 	MTX_MUL_SCL;
 }
 void  mtxf_mul_scl(const float * const A, const int m, const int n, float k, float *C)
 {
-	float (*a)[n] = (float (*)[n])A;
+	const float (*a)[n] = (const float (*)[n])A;
 	float (*c)[n] = (float (*)[n])C;
 	MTX_MUL_SCL;
 }
 void mtxlf_mul_scl(const double * const A, const int m, const int n, double k, double *C)
 {
-	double (*a)[n] = (double (*)[n])A;
+	const double (*a)[n] = (const double (*)[n])A;
 	double (*c)[n] = (double (*)[n])C;
 	MTX_MUL_SCL;
 }
 void mtxLf_mul_scl(const long double * const A, const int m, const int n, long double k, long double *C)
 {
-	long double (*a)[n] = (long double (*)[n])A;
+	const long double (*a)[n] = (const long double (*)[n])A;
 	long double (*c)[n] = (long double (*)[n])C;
 	MTX_MUL_SCL;
 }
@@ -428,25 +428,25 @@ void mtxLf_mul_scl(const long double * const A, const int m, const int n, long d
 /* C(mxn) = A(mxp) / k*J(mxn)	Divide each element of A(mxn) by constant k */
 void  mtxi_div_scl(const int * const A,  const int m, const int n, int k, int *C)
 {
-	int (*a)[n] = (int (*)[n])A;
+	const int (*a)[n] = (const int (*)[n])A;
 	int (*c)[n] = (int (*)[n])C;
 	MTX_DIV_SCL;
 }
 void  mtxf_div_scl(const float * const A, const int m, const int n, float k, float *C)
 {
-	float (*a)[n] = (float (*)[n])A;
+	const float (*a)[n] = (const float (*)[n])A;
 	float (*c)[n] = (float (*)[n])C;
 	MTX_DIV_SCL;
 }
 void mtxlf_div_scl(const double * const A, const int m, const int n, double k, double *C)
 {
-	double (*a)[n] = (double (*)[n])A;
+	const double (*a)[n] = (const double (*)[n])A;
 	double (*c)[n] = (double (*)[n])C;
 	MTX_DIV_SCL;
 }
 void mtxLf_div_scl(const long double * const A, const int m, const int n, long double k, long double *C)
 {
-	long double (*a)[n] = (long double (*)[n])A;
+	const long double (*a)[n] = (const long double (*)[n])A;
 	long double (*c)[n] = (long double (*)[n])C;
 	MTX_DIV_SCL;
 }
