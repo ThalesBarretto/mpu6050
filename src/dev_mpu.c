@@ -402,7 +402,7 @@ int mpu_ctl_dlpf(struct mpu_dev * dev, unsigned int dlpf)
 		return 9;
 	}
 	
-	unsigned int old_rate_hz = dev->sr;
+	unsigned int old_rate_hz = (unsigned int)dev->sr;
 	
 	if ((mpu_cfg_get_val(dev, CONFIG, &val)) < 0)
 		return -1;
@@ -418,7 +418,7 @@ int mpu_ctl_dlpf(struct mpu_dev * dev, unsigned int dlpf)
 
 	dev->dlpf = dlpf;
 
-	unsigned int new_rate_hz = dev->sr;
+	unsigned int new_rate_hz = (unsigned int)dev->sr;
 	if (old_rate_hz != new_rate_hz) {
 		if ((mpu_ctl_samplerate(dev, old_rate_hz)) < 0)
 			return -1;
@@ -434,7 +434,7 @@ int mpu_ctl_samplerate(struct mpu_dev * dev, unsigned int rate_hz)
 		return -1;
 	
 	/* break circular dependencies */
-	unsigned int old_rate_hz = dev->sr;
+	unsigned int old_rate_hz = (unsigned int)dev->sr;
 	if( rate_hz == old_rate_hz ) {
 		return 9;
 	}
@@ -1017,8 +1017,10 @@ static int mpu_cfg_parse_SMPLRT_DIV(struct mpu_dev * dev)
 
 	dev->sr   = sampling_rate; 
 	dev->st	  = sampling_time;
-	dev->dly.tv_sec = trunc(sampling_time);
-	dev->dly.tv_nsec = 1000000000 * (sampling_time - dev->dly.tv_sec);
+	//dev->dly.tv_sec = trunc(sampling_time);
+	dev->dly.tv_sec = lrint(sampling_time);
+	//dev->dly.tv_nsec = 1000000000 * (sampling_time - dev->dly.tv_sec);
+	dev->dly.tv_nsec = 1000000000 * lrint(sampling_time - dev->dly.tv_sec);
 
 	
 	return 0;
@@ -1077,7 +1079,7 @@ int mpu_dat_set(struct mpu_dev * dev)
 	if (dev->cfg->accel_fifo_en) {
 		dev->dat->AM = 0;
 		dev->AM  = &dev->dat->AM;
-		dev->dat->scl[count] = 1.0L/(double)dev->albs;
+		dev->dat->scl[count] = 1.0/(double)dev->albs;
 		dev->dat->dat[count][0] = 0;
 		dev->Ax  = &dev->dat->dat[count][0];
 		dev->Ax2 = &dev->dat->squ[count];
@@ -1087,7 +1089,7 @@ int mpu_dat_set(struct mpu_dev * dev)
 		dev->Axm = &dev->dat->mea[count];
 		dev->Axv = &dev->dat->var[count];
 		count++;
-		dev->dat->scl[count] = 1.0L/(double)dev->albs;
+		dev->dat->scl[count] = 1.0/(double)dev->albs;
 		dev->dat->dat[count][0] = 0;
 		dev->Ay  = &dev->dat->dat[count][0];
 		dev->Ay2 = &dev->dat->squ[count];
@@ -1097,7 +1099,7 @@ int mpu_dat_set(struct mpu_dev * dev)
 		dev->Aym = &dev->dat->mea[count];
 		dev->Ayv = &dev->dat->var[count];
 		count++;
-		dev->dat->scl[count] = 1.0L/(double)dev->albs;
+		dev->dat->scl[count] = 1.0/(double)dev->albs;
 		dev->dat->dat[count][0] = 0;
 		dev->Az  = &dev->dat->dat[count][0];
 		dev->Az2 = &dev->dat->squ[count];
@@ -1109,7 +1111,7 @@ int mpu_dat_set(struct mpu_dev * dev)
 		count++;
 	}
 	if (dev->cfg->temp_fifo_en)	{
-		dev->dat->scl[count] = 1/340.0L;
+		dev->dat->scl[count] = 1/340.0;
 		dev->dat->dat[count][0] = 0;
 		dev->t  = &dev->dat->dat[count][0];
 		dev->to = &dev->cal->off[count];
@@ -1122,7 +1124,7 @@ int mpu_dat_set(struct mpu_dev * dev)
 	if (dev->cfg->xg_fifo_en)	{
 		dev->dat->GM = 0;
 		dev->GM  = &dev->dat->GM;
-		dev->dat->scl[count] = 1.0L/(double)dev->glbs;
+		dev->dat->scl[count] = 1.0/(double)dev->glbs;
 		dev->dat->dat[count][0] = 0;
 		dev->Gx  = &dev->dat->dat[count][0];
 		dev->Gx2 = &dev->dat->squ[count];
@@ -1136,7 +1138,7 @@ int mpu_dat_set(struct mpu_dev * dev)
 	if (dev->cfg->yg_fifo_en)	{
 		dev->dat->GM = 0;
 		dev->GM  = &dev->dat->GM;
-		dev->dat->scl[count] = 1.0L/(double)dev->glbs;
+		dev->dat->scl[count] = 1.0/(double)dev->glbs;
 		dev->dat->dat[count][0] = 0;
 		dev->Gy  = &dev->dat->dat[count][0];
 		dev->Gy2 = &dev->dat->squ[count];
@@ -1150,7 +1152,7 @@ int mpu_dat_set(struct mpu_dev * dev)
 	if (dev->cfg->zg_fifo_en)	{
 		dev->dat->GM = 0;
 		dev->GM  = &dev->dat->GM;
-		dev->dat->scl[count] = 1.0L/(double)dev->glbs;
+		dev->dat->scl[count] = 1.0/(double)dev->glbs;
 		dev->dat->dat[count][0] = 0;
 		dev->Gz  = &dev->dat->dat[count][0];
 		dev->Gz2 = &dev->dat->squ[count];
@@ -1512,22 +1514,22 @@ int mpu_ctl_fifo_data(struct mpu_dev *dev)
 		*(dev->t) += 36.53;
 	}
 	if (dev->cfg->accel_fifo_en) {
-		*(dev->Ax) -= dev->cal->xa_bias; 
-		*(dev->Ay) -= dev->cal->ya_bias; 
-		*(dev->Az) -= dev->cal->za_bias; 
-		*(dev->Ax2) = *(dev->Ax) * *(dev->Ax); 
-		*(dev->Ay2) = *(dev->Ay) * *(dev->Ay); 
-		*(dev->Az2) = *(dev->Az) * *(dev->Az); 
-		*(dev->AM) = sqrtl(*(dev->Ax2) + *(dev->Ay2) + *(dev->Az2)); 
+		*(dev->Ax) -= (mpu_data_t)dev->cal->xa_bias; 
+		*(dev->Ay) -= (mpu_data_t)dev->cal->ya_bias; 
+		*(dev->Az) -= (mpu_data_t)dev->cal->za_bias; 
+		*(dev->Ax2) = (mpu_data_t)*(dev->Ax) * *(dev->Ax); 
+		*(dev->Ay2) = (mpu_data_t)*(dev->Ay) * *(dev->Ay); 
+		*(dev->Az2) = (mpu_data_t)*(dev->Az) * *(dev->Az); 
+		*(dev->AM) = (mpu_data_t)sqrtl(*(dev->Ax2) + *(dev->Ay2) + *(dev->Az2)); 
 	}
 	if (dev->cfg->xg_fifo_en && dev->cfg->yg_fifo_en && dev->cfg->zg_fifo_en ) {
-		*(dev->Gx) -= dev->cal->xg_bias; 
-		*(dev->Gy) -= dev->cal->yg_bias; 
-		*(dev->Gz) -= dev->cal->zg_bias; 
+		*(dev->Gx) -= (mpu_data_t)dev->cal->xg_bias; 
+		*(dev->Gy) -= (mpu_data_t)dev->cal->yg_bias; 
+		*(dev->Gz) -= (mpu_data_t)dev->cal->zg_bias; 
 		*(dev->Gx2) = *(dev->Gx) * *(dev->Gx); 
 		*(dev->Gy2) = *(dev->Gy) * *(dev->Gy); 
 		*(dev->Gz2) = *(dev->Gz) * *(dev->Gz); 
-		*(dev->GM) = sqrtl(*(dev->Gx2) + *(dev->Gy2) + *(dev->Gz2)); 
+		*(dev->GM) = (mpu_data_t)sqrtl(*(dev->Gx2) + *(dev->Gy2) + *(dev->Gz2)); 
 	}
 	dev->samples++;
 
@@ -2280,9 +2282,9 @@ int mpu_ctl_calibration(struct mpu_dev *dev)
 void mpu_ctl_fix_axis(struct mpu_dev *dev)
 {
 	if (dev->cfg->accel_fifo_en) {
-		*(dev->Ax) *= -1.0L;
-		*(dev->Ay) *= -1.0L;
-		*(dev->Az) *= -1.0L;
+		*(dev->Ax) *= -1;
+		*(dev->Ay) *= -1;
+		*(dev->Az) *= -1;
 	}
 }
 

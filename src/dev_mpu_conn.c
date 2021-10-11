@@ -63,7 +63,7 @@ int mpu_socket_sendmsg(int *sfd, char *msg)
 	assert(NULL != msg);
 
 	/* Have channel. Send separate datagrams, read responses. */ 
-	size_t len = strlen(msg) + 1;	/* mind the terminator	*/
+	ssize_t len = strlen(msg) + 1;	/* mind the terminator	*/
 
 	if (len > MPU_SOCK_BUFFSIZ) {		/* buffer overflow	*/
 		fprintf(stderr, "Ignoring long message\n");
