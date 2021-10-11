@@ -1,7 +1,5 @@
 CC	=gcc
-#	-Wsign-conversion\
-	 -Wsign-conversion \
-
+CFLAGS	=-g -fPIC
 WFLAGS	=-Wall \
 	 -Wextra \
 	 -Wpedantic \
@@ -24,10 +22,12 @@ WFLAGS	=-Wall \
 	 -Wdangling-else \
 	 -Wlogical-op \
 	 -Wsign-compare \
+	 -Wsign-conversion\
 	 -Wfloat-conversion \
+	 -Wmisleading-indentation \
+	 -Wsequence-point \
+	 -Wmissing-braces \
 	 -Wlogical-not-parentheses 
-
-CFLAGS	=
 
 SRC	=src
 BLD	=bld
@@ -37,11 +37,18 @@ PLAY	="/home/pi/play/mpu6050"
 
 LIBS	=-lm -li2c
 SRCS	=$(wildcard	$(SRC)/*.c)
+HDRS	=$(wildcard	$(SRC)/*.h)
 OBJS	=$(patsubst	$(SRC)/%.c,$(OBJ)/%.o, $(SRCS))
 PKGS	=$(patsubst	$(BINS),$(BINS).tar.gz,$(BINS))
 BINS	=mock
 
+
+whole: WFLAGS+=-Wno-unused-macros
+whole: $(SRCS) $(HDRS)
+	$(CC) $(CFLAGS) $(WFLAGS) $(LIBS) $^ -o $(BIN)/$(BINS)_whole
+
 release: CFLAGS=-O2 -DNDEBUG
+release: WFLAGS=-Wall
 release: clean
 release: $(BIN)/$(BINS)
 
@@ -55,16 +62,16 @@ $(OBJ):
 $(BIN):
 	mkdir -p $@
 
-$(OBJ)/%.o: $(SRC)/%.c $(OBJ)
+$(OBJ)/%.o: $(SRC)/%.c | $(OBJ)
 	$(CC) $(WFLAGS) $(CFLAGS) $(LIBS) -c $< -o $@
 
-$(BIN)/$(BINS): $(OBJS) $(BIN)
+$(BIN)/$(BINS): $(OBJS) | $(BIN)
 	$(CC) $(WFLAGS) $(CFLAGS) $(LIBS) -o $@ $(OBJS) $(LDFLAGS)
 
 $(BLD)/$(PKGS): release 
 	tar -czvf $@ $(BIN)/$(BINS)
 
-all:	$(BIN)/$(BINS) 
+all:	$(BIN)/$(BINS) whole
 
 clean:
 	$(RM) -r $(BIN) $(OBJ)
@@ -80,6 +87,6 @@ distclean:
 pi:
 	scp -r $(SRC) pi:$(PLAY)
 	scp  Makefile pi:$(PLAY)
-	ssh  pi 'cd $(PLAY) && $(MAKE) dist'
+	ssh  pi 'cd $(PLAY) && $(MAKE) release'
 
-.PHONY: all clean dist distclean pi
+.PHONY: all clean dist distclean pi fast
