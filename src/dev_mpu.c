@@ -2153,11 +2153,11 @@ int mpu_ctl_calibration(struct mpu_dev *dev)
 	xa_bias /= dev->cal->samples;
 	ya_bias /= dev->cal->samples;
 	za_bias /= dev->cal->samples;
-	AM_bias /= dev->cal->samples;
+	//AM_bias /= dev->cal->samples;
 	xg_bias /= dev->cal->samples;
 	yg_bias /= dev->cal->samples;
 	zg_bias /= dev->cal->samples;
-	GM_bias /= dev->cal->samples;
+	//GM_bias /= dev->cal->samples;
 
 	/* in LSB's, scale things to 1'g acceleration */
 	long double a_factor = (dev->albs *  dev->cal->AM_bias);
@@ -2203,14 +2203,14 @@ int mpu_ctl_calibration(struct mpu_dev *dev)
 		zg_bias += *(dev->Gz);
 		GM_bias += *(dev->GM);
 	}
-	xa_bias /= dev->cal->samples;
-	ya_bias /= dev->cal->samples;
-	za_bias /= dev->cal->samples;
-	AM_bias /= dev->cal->samples;
+	//xa_bias /= dev->cal->samples;
+	//ya_bias /= dev->cal->samples;
+	//za_bias /= dev->cal->samples;
+	//AM_bias /= dev->cal->samples;
 	xg_bias /= dev->cal->samples;
 	yg_bias /= dev->cal->samples;
 	zg_bias /= dev->cal->samples;
-	GM_bias /= dev->cal->samples;
+	//GM_bias /= dev->cal->samples;
 	mpu_read_data(dev, XG_OFFS_USRH, &dev->cal->xg_orig);
 	mpu_read_data(dev, YG_OFFS_USRH, &dev->cal->yg_orig);
 	mpu_read_data(dev, ZG_OFFS_USRH, &dev->cal->zg_orig);
@@ -2224,6 +2224,7 @@ int mpu_ctl_calibration(struct mpu_dev *dev)
 	mpu_write_byte(dev, ZG_OFFS_USRH,(uint8_t)((((uint16_t)dev->cal->zg_cust)>>8)&0xFF));
 	mpu_write_byte(dev, ZG_OFFS_USRL,(uint8_t)((uint16_t)dev->cal->zg_cust)&0xFF);
 
+	//TODO: replace this for a rotation matrix
 	xa_bias = 0;
 	ya_bias = 0;
 	za_bias = 0;
