@@ -12,7 +12,6 @@
 #include <math.h>
 #include <tgmath.h>
 
-
 /*
  * MATRIX ROTATIONS - Generic 
  * 	= A,B are sources, C is destination
@@ -119,6 +118,15 @@ void mtxlf_rot_cp2(const double 	* const A, double	*C);
 void mtxLf_rot_cp2(const long double    * const A, long double	*C);
 
 /* helpers */
+#ifndef PI
+#ifdef M_PI
+#define PI M_PI
+#else
+#define PI (3.1415926535897932384)
+#define M_PI PI
+#endif
+#endif
+
 #define squ(x) ((x)*(x))
 static const float  		mtx_rot_r2df	= (float)(180./M_PI);
 static const double  		mtx_rot_r2dl 	= 	 (180./M_PI);
@@ -126,6 +134,7 @@ static const long double	mtx_rot_r2dLf	= 	(180.L/M_PI);
 static const float  		mtx_rot_d2rf	= (float)(M_PI/180.);
 static const double  		mtx_rot_d2rl 	= 	 (M_PI/180. );
 static const long double	mtx_rot_d2rLf	= 	 (M_PI/180.L);
+
 #define r2d(q)  _Generic((q),	 \
 	float		:  r2df, \
 	double		: r2dlf, \
@@ -137,6 +146,7 @@ static const long double	mtx_rot_d2rLf	= 	 (M_PI/180.L);
 	double		: d2rlf, \
 	long double	: d2rLf  \
 	)(q)
+
 static inline float   __attribute__((always_inline)) d2rf(const float q)
 {
 	return q * mtx_rot_d2rf;
