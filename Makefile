@@ -71,7 +71,7 @@ $(BIN)/$(BINS): $(OBJS) | $(BIN)
 $(BLD)/$(PKGS): release 
 	tar -czvf $@ $(BIN)/$(BINS)
 
-all:	$(BIN)/$(BINS) whole
+all:	$(BIN)/$(BINS)
 
 clean:
 	$(RM) -r $(BIN) $(OBJ)
