@@ -2,6 +2,8 @@ bld
 *.o
 *.so
 *.a
+*.sh
 *.vscode
+TODO
 tags
 src/tags
