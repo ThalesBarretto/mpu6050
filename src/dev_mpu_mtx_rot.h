@@ -5,12 +5,7 @@
 #ifndef MPU_MTX_ROT_H_
 #define MPU_MTX_ROT_H_
 
-/* this is part of dev_mpu_mtx */
 #include "dev_mpu_mtx.h"
-
-/* needed for all calculations */
-#include <math.h>
-#include <tgmath.h>
 
 /*
  * MATRIX ROTATIONS - Generic 
