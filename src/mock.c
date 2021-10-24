@@ -1,11 +1,10 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <getopt.h>
-#include "dev_mpu.h"
-#include "dev_mpu_print.h"
-#include "dev_mpu_opt.h"
-#include "dev_mpu_flt.h"
-
+#include "include/driver.h"
+#include "mock_print.h"
+#include "mock_opt.h"
+#include "include/dev_mpu_flt.h"
 
 struct option lopts[] = {
 	{"quiet",	no_argument,		0, 0},
@@ -16,7 +15,7 @@ struct option lopts[] = {
 	{"arange",	required_argument,	0, 0},
 	{"grange",	required_argument,	0, 0},
 	{"dump",	required_argument,	0, 0},
-	{"calibrate",	required_argument,	0, 0},
+	{"calibrate",	no_argument,		0, 0},
 	{"connect",	required_argument,	0, 0},
 	{0,		0,		   	0, 0},
 };
@@ -32,7 +31,7 @@ int main(int argc, char *argv[])
 	else
 		mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev, MPU_MODE_RESTORE);
 
-	assert(dev != NULL);
+	assert(NULL != dev);
 
 	mpu_opt_set(dev, mopts);
 
@@ -51,7 +50,6 @@ int main(int argc, char *argv[])
 
 	char *msg = malloc(sizeof(char)*MPU_MAXLINE);
 	char *buf = malloc(sizeof(char)*MPU_MAXLINE);
-
 
 	while(1) {
 		mpu_ctl_fifo_data(dev);

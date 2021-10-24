@@ -1,4 +1,4 @@
-#include "dev_mpu_opt.h"
+#include "mock_opt.h"
 
 int mpu_opt_get(struct option *opts, int argc, char **argv, struct mpu_opt *mopts)
 {

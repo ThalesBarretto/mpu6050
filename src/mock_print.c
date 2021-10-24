@@ -1,12 +1,5 @@
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdio.h>
-#include "dev_mpu.h"
+#include "mock_print.h"
 
-void mpu_print_all(struct mpu_dev *dev, char *msg, char *buf);
-void mpu_print_data  (struct mpu_dev *dev, int times);
-void mpu_print_bias  (struct mpu_dev *dev);
 void mpu_print_all(struct mpu_dev *dev, char *msg, char *buf)
 {
 	sprintf(buf, "%12llu ", dev->samples);

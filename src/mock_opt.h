@@ -1,12 +1,13 @@
 #ifdef __cplusplus
 	extern "C" {
 #endif
+#ifndef _MOCK_OPT_H_
+#define _MOCK_OPT_H_
 
-#ifndef _DEV_MPU_OPT_H_
-#define _DEV_MPU_OPT_H_
-
-#include "dev_mpu.h"
 #include <getopt.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 
 struct  mpu_opt {
 	bool quiet;	/* don't print to console	*/
@@ -35,8 +36,7 @@ int mpu_opt_get(struct option *lopts, int argc, char **argv, struct mpu_opt *mop
 int mpu_opt_set(struct mpu_dev *dev, struct mpu_opt *mopts);
 void mpu_opt_pri(struct mpu_opt *mopts);
 
-#endif /* _DEV_MPU_OPT_H_ */
-
+#endif /* _MOCK_OPT_H_ */
 #ifdef __cplusplus
 	}
 #endif
