@@ -43,10 +43,6 @@ PKGS	=$(patsubst	$(BINS),$(BINS).tar.gz,$(BINS))
 BINS	=mock
 
 
-whole: WFLAGS+=-Wno-unused-macros
-whole: $(SRCS) $(HDRS)
-	$(CC) $(CFLAGS) $(WFLAGS) $(LIBS) $^ -o $(BIN)/$(BINS)_whole
-
 release: CFLAGS=-O2 -DNDEBUG
 release: WFLAGS=-Wall
 release: clean
