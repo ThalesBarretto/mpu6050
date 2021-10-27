@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdio.h>
-#include "include/driver.h"
+#include "mpu6050_core.h"
 
 void mpu_print_all   (struct mpu_dev *dev, char *msg, char *buf);
 void mpu_print_data  (struct mpu_dev *dev, int times);

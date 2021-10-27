@@ -1,10 +1,10 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <getopt.h>
-#include "include/driver.h"
+#include "mpu6050_core.h"
 #include "mock_print.h"
 #include "mock_opt.h"
-#include "include/dev_mpu_flt.h"
+#include "dev_mpu_flt.h"
 
 struct option lopts[] = {
 	{"quiet",	no_argument,		0, 0},

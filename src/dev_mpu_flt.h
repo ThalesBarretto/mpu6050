@@ -5,11 +5,8 @@
 #ifndef MPU_FLT_H_
 #define MPU_FLT_H_
 
-#include "include/mpu6050_driver.h"
+#include "mpu6050_core.h"
 #include "mtx.h"
-#include "mtx_mul.h"
-#include "mtx_rot.h"
-#include "mtx_rot_ypr.h"
 #include <assert.h>
 #include <inttypes.h>
 #define MDEBUG printf("%3d %-12s\n", __LINE__, __func__);

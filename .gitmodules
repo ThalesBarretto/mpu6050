@@ -1,6 +1,6 @@
-[submodule "submodules/driver_mpu6050"]
-	path = submodules/driver_mpu6050
-	url = /home/thales/repo/bare/driver_mpu6050.git
-[submodule "submodules/matrices"]
-	path = submodules/matrices
-	url = /home/thales/repo/bare/matrices.git
+[submodule "mod/libmtx"]
+	path = mod/libmtx
+	url = /home/thales/repo/bare/libmtx.git
+[submodule "mod/libmpu6050"]
+	path = mod/libmpu6050
+	url = /home/thales/repo/bare/libmpu6050.git
