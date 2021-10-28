@@ -1,4 +1,11 @@
+#include <assert.h>
+#include <string.h>
+#include <inttypes.h>
+#include <tgmath.h>
+#include <libmtx/mtx.h>
 #include "dev_mpu_flt.h"
+
+#define MDEBUG printf("%3d %-12s\n", __LINE__, __func__);
 
 /* get angle data from accelerometer*/
 static inline void mpu_ang_acc(struct mpu_ang * ang);

@@ -7,12 +7,9 @@
 #include <sys/socket.h>
 #include <assert.h>
 #include <sys/ioctl.h>
-#include "mpu6050_core.h"
+#include <libmpu6050/mpu6050_core.h>
 
 #define MPU_SOCK_BUFFSIZ 500
-int mpu_socket_connect(int *sfd, char *host, char *port);
-int mpu_socket_sendmsg(int *sfd, char *msg);
-int mpu_socket_makemsg(struct mpu_dev *dev, char *msg, char *buf);
 int mpu_socket_connect(int *sfd, char *host, char *port)
 
 {

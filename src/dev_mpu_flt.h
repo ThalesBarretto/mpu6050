@@ -5,11 +5,7 @@
 #ifndef MPU_FLT_H_
 #define MPU_FLT_H_
 
-#include "mpu6050_core.h"
-#include "mtx.h"
-#include <assert.h>
-#include <inttypes.h>
-#define MDEBUG printf("%3d %-12s\n", __LINE__, __func__);
+#include <libmpu6050/mpu6050_core.h>
 
 /* angles set */
 struct mpu_ang {

@@ -1,13 +1,13 @@
 CC	=gcc
 CPPFLAGS=
 CFLAGS	=-g -Wall -Wextra
-LIBS	=-lm -li2c
+LIBS	=-lm -li2c -lmtx -lmpu6050
 PROGS	=mock
 
 SRC	=src
 BLD	=bld
 OBJ	=$(BLD)/obj
-BIN	=bin
+BIN	=$(BLD)/bin
 
 SRCS	=$(wildcard	$(SRC)/*.c)
 HDRS	=$(wildcard	$(SRC)/*.h)

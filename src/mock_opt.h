@@ -6,8 +6,6 @@
 
 #include <getopt.h>
 #include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
 
 struct  mpu_opt {
 	bool quiet;	/* don't print to console	*/

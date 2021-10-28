@@ -3,11 +3,7 @@
 #endif
 #ifndef _MOCK_PRINT_H_
 #define _MOCK_PRINT_H_
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdio.h>
-#include "mpu6050_core.h"
+#include <libmpu6050/mpu6050_core.h>
 
 void mpu_print_all   (struct mpu_dev *dev, char *msg, char *buf);
 void mpu_print_data  (struct mpu_dev *dev, int times);
