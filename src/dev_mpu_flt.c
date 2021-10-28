@@ -62,9 +62,9 @@ static inline void mpu_ang_gyr(struct mpu_ang *base, struct mpu_ang *ang)
 /* ASSUME DEGREES - Estimate angles from accel */
 static inline void mpu_ang_acc(struct mpu_ang *ang)
 {
-	ang->rho =  r2d((atan2l (sqrtl(*(ang->dev->Ax2) + *(ang->dev->Ay2)), -*(ang->dev->Az))));
-	ang->ean[0] = -r2d((atan2l(1.L* *(ang->dev->Ay), -1.L * *(ang->dev->Az))));
-	ang->ean[1] = -r2d((atan2l(1.L* *(ang->dev->Ax), -1.L * *(ang->dev->Az))));
+	ang->rho =  r2d((atan2 (sqrtl(*(ang->dev->Ax2) + *(ang->dev->Ay2)), -*(ang->dev->Az))));
+	ang->ean[0] = -r2d((atan2(1.L* *(ang->dev->Ay), -1.L * *(ang->dev->Az))));
+	ang->ean[1] = -r2d((atan2(1.L* *(ang->dev->Ax), -1.L * *(ang->dev->Az))));
 	ang->ean[2] = 0;
 }
 
@@ -121,7 +121,7 @@ void mpu_flt_com_update(struct mpu_flt_dat *flt)
 	/* psi angle come only from gyro */
 	flt->anf->ean[2] =  flt->ang->ean[2];
 
-	//flt->rho =  r2d * (atan2l (sqrtl(*(flt->dev->Ax2) + *(flt->dev->Ay2)), -*(flt->dev->Az)));
+	//flt->rho =  r2d * (atan2 (sqrtl(*(flt->dev->Ax2) + *(flt->dev->Ay2)), -*(flt->dev->Az)));
 	flt->anf->rho = flt->ana->rho;
 
 }

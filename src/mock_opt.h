@@ -6,6 +6,7 @@
 
 #include <getopt.h>
 #include <stdbool.h>
+#include <libmpu6050/mpu6050_core.h>
 
 struct  mpu_opt {
 	bool quiet;	/* don't print to console	*/
@@ -28,7 +29,6 @@ struct  mpu_opt {
 	char n_hos[256];/* network host			*/
 	char n_por[16];	/* network port			*/
 };
-
 
 int mpu_opt_get(struct option *lopts, int argc, char **argv, struct mpu_opt *mopts);
 int mpu_opt_set(struct mpu_dev *dev, struct mpu_opt *mopts);
