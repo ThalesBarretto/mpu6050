@@ -3,9 +3,9 @@
 #include <string.h>
 #include <getopt.h>
 #include <libmpu6050/mpu6050_core.h>
-#include "mock_print.h"
-#include "mock_opt.h"
-#include "dev_mpu_flt.h"
+#include "demo_print.h"
+#include "demo_opt.h"
+#include "demo_filter.h"
 
 #define MPU_MAXLINE 1024
 

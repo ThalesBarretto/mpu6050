@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <libmpu6050/mpu6050_core.h>
-#include "mock_opt.h"
+#include "demo_opt.h"
 
 int mpu_opt_get(struct option *opts, int argc, char **argv, struct mpu_opt *mopts)
 {

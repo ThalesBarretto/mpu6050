@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdio.h>
 #include <libmpu6050/mpu6050_regs.h>
-#include "mock_print.h"
+#include "demo_print.h"
 
 void mpu_print_all(struct mpu_dev *dev, char *msg, char *buf)
 {

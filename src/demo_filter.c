@@ -3,7 +3,7 @@
 #include <inttypes.h>
 #include <tgmath.h>
 #include <libmtx/mtx.h>
-#include "dev_mpu_flt.h"
+#include "demo_filter.h"
 
 #define MDEBUG printf("%3d %-12s\n", __LINE__, __func__);
 
