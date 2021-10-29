@@ -1,10 +1,11 @@
+PROG	=mpu6050
+PROGB	=$(PROG)-demo
+PROGV	=1
+
 CC	=gcc
 CPPFLAGS=
 CFLAGS	=-DNDEBUG -O2 -march=native -mtune=native -fPIC -Wall -Wextra -Wpedantic
 LIBS	=-lm -li2c -lmtx -lmpu6050
-PROG	=mpu6050
-PROGB	=mock
-PROGV	=1
 
 SRC	=src
 BLD	=bld
