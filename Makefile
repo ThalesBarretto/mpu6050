@@ -1,6 +1,6 @@
 CC	=gcc
 CPPFLAGS=
-CFLAGS	=-g -Wall -Wextra
+CFLAGS	=-DNDEBUG -O2 -march=native -mtune=native -fPIC -Wall -Wextra -Wpedantic
 LIBS	=-lm -li2c -lmtx -lmpu6050
 PROG	=mpu6050
 PROGB	=mock
