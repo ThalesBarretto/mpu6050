@@ -3,15 +3,12 @@
 #include <string.h>
 #include <getopt.h>
 #include <libmpu6050/mpu6050_core.h>
-#include "demo_print.h"
 #include "demo_opt.h"
+#include "demo_socket.h"
+#include "demo_print.h"
 #include "demo_filter.h"
 
 #define MPU_MAXLINE 1024
-
-int mpu_socket_connect(int *sfd, char *host, char *port);
-int mpu_socket_sendmsg(int *sfd, char *msg);
-int mpu_socket_makemsg(struct mpu_dev *dev, char *msg, char *buf);
 
 struct option lopts[] = {
 	{"quiet",	no_argument,		0, 0},
