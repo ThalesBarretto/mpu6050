@@ -64,7 +64,7 @@ int mpu_opt_set(struct mpu_dev *dev, struct mpu_opt *mopts)
 		mpu_ctl_dump(dev,  mopts->d_fln);
 
 	if (mopts->ca)
-		mpu_ctl_calibration(dev);
+		mpu_ctl_calibrate(dev);
 
 	return 0;
 }
