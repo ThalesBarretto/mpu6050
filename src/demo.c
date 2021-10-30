@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <inttypes.h>
 #include <string.h>
 #include <getopt.h>
@@ -31,17 +30,21 @@ int main(int argc, char *argv[])
 
 	struct mpu_dev *dev = NULL;
 	if (mopts->re)
-		mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev, MPU_MODE_RESET);
-	else
-		mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev, MPU_MODE_RESTORE);
+		mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev, MPU6050_RESET);
 
-	assert(NULL != dev);
+	if (NULL == dev) {
+		fprintf(stderr,"Unable to create device, aborting\n");
+		abort();
+	}
 
 	mpu_opt_set(dev, mopts);
 
 	struct mpu_flt_dat *flt = NULL;
 	mpu_flt_com_init(dev, &flt);
-	assert(flt != NULL);
+	if (NULL == flt) {
+		fprintf(stderr,"Unable to create filter, aborting\n");
+		abort();
+	}
 
 	int sfd = -1;
 	if (mopts->ne) {
