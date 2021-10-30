@@ -18,10 +18,11 @@ struct option lopts[] = {
 	{"arange",	required_argument,	0, 0},
 	{"grange",	required_argument,	0, 0},
 	{"dump",	required_argument,	0, 0},
-	{"calibrate",	required_argument,	0, 0},
+	{"calibrate",	no_argument,		0, 0},
 	{"connect",	required_argument,	0, 0},
 	{0,		0,		   	0, 0},
 };
+
 
 int main(int argc, char *argv[])
 {
