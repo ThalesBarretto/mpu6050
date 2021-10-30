@@ -1,13 +1,17 @@
+#include <stdlib.h>
+#include <stdio.h>
 #include <inttypes.h>
 #include <string.h>
 #include <getopt.h>
 #include <libmpu6050/mpu6050_core.h>
 #include "demo_opt.h"
 #include "demo_socket.h"
-#include "demo_print.h"
-#include "demo_filter.h"
+#include "filter.h"
 
 #define MPU_MAXLINE 1024
+
+void snprint_data (struct mpu_dev *dev, char *msg, char *buf);
+void snprint_angle(struct mpu_ang *ang, char *msg, char *buf);
 
 struct option lopts[] = {
 	{"quiet",	no_argument,		0, 0},
@@ -22,7 +26,6 @@ struct option lopts[] = {
 	{"connect",	required_argument,	0, 0},
 	{0,		0,		   	0, 0},
 };
-
 
 int main(int argc, char *argv[])
 {
@@ -43,7 +46,7 @@ int main(int argc, char *argv[])
 	mpu_opt_set(dev, mopts);
 
 	struct mpu_flt_dat *flt = NULL;
-	mpu_flt_com_init(dev, &flt);
+	filter_init(dev, &flt);
 	if (NULL == flt) {
 		fprintf(stderr,"Unable to create filter, aborting\n");
 		abort();
@@ -62,24 +65,22 @@ int main(int argc, char *argv[])
 	char *buf = malloc(sizeof(char)*MPU_MAXLINE);
 
 	while(1) {
-		//mpu_ctl_fifo_data(dev);
 		mpu_get_data(dev);
-		mpu_flt_com_update(flt);
-		mpu_print_all(dev, msg, buf);
-		mpu_ang_pri(flt->anf, msg, buf);
+		filter_update(flt);
+		snprint_data(dev, msg, buf);
+		snprint_angle(flt->anf, msg, buf);
 		strcat(msg,"\n");
 
-		if (!mopts->quiet) {
+		if (!mopts->quiet)
 			printf("%s", msg);
-		}
 
-		if (mopts->ne && (sfd >= 0)) {
+		if (mopts->ne && (sfd >= 0))
 			mpu_socket_sendmsg(&sfd, msg);
-		}
 
 		sprintf(msg,"%s", "");
 	}
-
+	filter_destroy(flt);
+	mpu_destroy(dev);
 	free(msg);
 	free(buf);
 	return 0;

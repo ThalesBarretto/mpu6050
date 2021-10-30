@@ -89,25 +89,15 @@ int mpu_socket_makemsg(struct mpu_dev *dev, char *msg, char *buf)
 	strcat(msg, buf);
 	snprintf(buf, MPU_SOCK_BUFFSIZ,"%3.0lf Hz ", dev->sr);
 	strcat(msg, buf);
-	if(dev->cfg->temp_fifo_en) {
-		snprintf(buf, MPU_SOCK_BUFFSIZ, "T:%+.1lf°C ",*(dev->t));
-		strcat(msg, buf);
-	}
-	if(dev->cfg->accel_fifo_en) {
-		snprintf(buf, MPU_SOCK_BUFFSIZ,"Ax:%+lf Ay:%+lf Az:%+lf ", *(dev->Ax), *(dev->Ay), *(dev->Az));
-		strcat(msg, buf);
-	}
-	if(dev->cfg->xg_fifo_en) {
-		snprintf(buf, MPU_SOCK_BUFFSIZ,"Gx:%+lf ", *(dev->Gx));
-		strcat(msg, buf);
-	}
-	if(dev->cfg->yg_fifo_en) {
-		snprintf(buf, MPU_SOCK_BUFFSIZ,"Gy:%+lf ", *(dev->Gy));
-		strcat(msg, buf);
-	}
-	if(dev->cfg->zg_fifo_en) {
-		snprintf(buf, MPU_SOCK_BUFFSIZ,"Gz:%+lf ", *(dev->Gz));
-		strcat(msg, buf);
-	}
+	snprintf(buf, MPU_SOCK_BUFFSIZ, "T:%+.1lf°C ",*(dev->t));
+	strcat(msg, buf);
+	snprintf(buf, MPU_SOCK_BUFFSIZ,"Ax:%+lf Ay:%+lf Az:%+lf ", *(dev->Ax), *(dev->Ay), *(dev->Az));
+	strcat(msg, buf);
+	snprintf(buf, MPU_SOCK_BUFFSIZ,"Gx:%+lf ", *(dev->Gx));
+	strcat(msg, buf);
+	snprintf(buf, MPU_SOCK_BUFFSIZ,"Gy:%+lf ", *(dev->Gy));
+	strcat(msg, buf);
+	snprintf(buf, MPU_SOCK_BUFFSIZ,"Gz:%+lf ", *(dev->Gz));
+	strcat(msg, buf);
 	return 0;
 }
