@@ -63,7 +63,6 @@ int main(int argc, char *argv[])
 
 	while(1) {
 		mpu_ctl_fifo_data(dev);
-		mpu_ctl_fix_axis(dev);
 		mpu_flt_com_update(flt);
 		mpu_print_all(dev, msg, buf);
 		mpu_ang_pri(flt->anf, msg, buf);
