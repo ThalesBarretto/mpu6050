@@ -12,13 +12,13 @@
 struct option lopts[] = {
 	{"quiet",	no_argument,		0, 0},
 	{"reset",	no_argument,		0, 0},
+	{"calibrate",	no_argument,		0, 0},
 	{"clksel",	required_argument,	0, 0},
 	{"dlpf",	required_argument,	0, 0},
 	{"rate",	required_argument,	0, 0},
 	{"arange",	required_argument,	0, 0},
 	{"grange",	required_argument,	0, 0},
 	{"dump",	required_argument,	0, 0},
-	{"calibrate",	no_argument,		0, 0},
 	{"connect",	required_argument,	0, 0},
 	{0,		0,		   	0, 0},
 };
@@ -62,7 +62,8 @@ int main(int argc, char *argv[])
 	char *buf = malloc(sizeof(char)*MPU_MAXLINE);
 
 	while(1) {
-		mpu_ctl_fifo_data(dev);
+		//mpu_ctl_fifo_data(dev);
+		mpu_get_data(dev);
 		mpu_flt_com_update(flt);
 		mpu_print_all(dev, msg, buf);
 		mpu_ang_pri(flt->anf, msg, buf);
