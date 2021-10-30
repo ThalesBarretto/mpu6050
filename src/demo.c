@@ -31,6 +31,8 @@ int main(int argc, char *argv[])
 	struct mpu_dev *dev = NULL;
 	if (mopts->re)
 		mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev, MPU6050_RESET);
+	else
+		mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev, MPU6050_RESTORE);
 
 	if (NULL == dev) {
 		fprintf(stderr,"Unable to create device, aborting\n");
