@@ -7,3 +7,5 @@ bld
 TODO
 tags
 src/tags
+man/*.gz
+man/*.xz
