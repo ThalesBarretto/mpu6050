@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+/* Copyright (C) 2021 Thales Antunes de Oliveira Barretto */
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
