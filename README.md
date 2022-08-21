@@ -11,7 +11,18 @@ You can attach the sensor to the RPi, install, and run the demo.
 
 ## Building, installing, removing
 
-You must build inside the Raspberry Pi 3
+You must build inside the Raspberry Pi 3.
+
+0. Install the depedendencies:
+
+`libi2c` - runtime dependecy
+`libi2c-dev` - make dependecy
+`pandoc` - make dependency for documentation
+
+```bash
+pi@pi ~ $> sudo apt update 
+pi@pi ~ $> sudo apt install libi2c libi2c-dev pandoc
+```
 
 1. Clone with `--recurse-submodules`
 2. Make and install the modules
