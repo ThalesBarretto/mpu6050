@@ -73,5 +73,11 @@ Useful command line options:
 
 - `--quiet` Supress output to local terminal
 
-###
 
+## Contributing
+
+Contributions are welcome on github, on three channels:
+
+* Open an [issue](<https://github.com/ThalesBarretto/mpu6050/issues>).
+* Start or enter a [discussion](<https://github.com/ThalesBarretto/mpu6050/discussions>).
+* Send a [pull request](<https://github.com/ThalesBarretto/mpu6050/pulls>).
