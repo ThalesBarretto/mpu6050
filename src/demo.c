@@ -63,8 +63,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	char *msg = malloc(sizeof(char)*MPU_MAXLINE);
-	char *buf = malloc(sizeof(char)*MPU_MAXLINE);
+	char *msg = calloc(1, sizeof(char)*MPU_MAXLINE);
+	char *buf = calloc(1, sizeof(char)*MPU_MAXLINE);
 
 	while(1) {
 		mpu_get_data(dev);

@@ -44,35 +44,35 @@ int angles_gyro(struct mpu_ang *base, struct mpu_ang *ang)
 	 *  For some reason the FPU will misbehave
 	 *
 	 */
-	long double Omega[3];	// PQR gyro rates
-	long double Phi[3];	// Euler last angles
-	long double Phi_dot[3]; // Euler angle rates
-	long double Phi_inc[3]; // Euler angle increment over period T
-	long double R_old[9];	// Rotation matrix for old attitude
-	long double R_inc[9];	// Rotation matrix for increment
-	long double R_new[9];	// Rotation matrix for new attitude
-	long double Phi_new[3];	// Euler new angles
+	long double omega[3];	// PQR gyro rates
+	long double phi[3];	// Euler last angles
+	long double phi_dot[3]; // Euler angle rates
+	long double phi_inc[3]; // Euler angle increment over period T
+	long double r_old[9];	// Rotation matrix for old attitude
+	long double r_inc[9];	// Rotation matrix for increment
+	long double r_new[9];	// Rotation matrix for new attitude
+	long double phi_new[3];	// Euler new angles
 
-	/* 1st, find Omega from gyro */
-	Omega[0] =  d2r(*(ang->dev->Gx));
-	Omega[1] = -d2r(*(ang->dev->Gy));
-	Omega[2] = -d2r(*(ang->dev->Gz));
+	/* 1st, find omega from gyro */
+	omega[0] =  d2r(*(ang->dev->Gx));
+	omega[1] = -d2r(*(ang->dev->Gy));
+	omega[2] = -d2r(*(ang->dev->Gz));
 	/* 2d, take last ypr angles */
-	Phi[0] = d2r(base->ean[0]);
-	Phi[1] = d2r(base->ean[1]);
-	Phi[2] = d2r(base->ean[2]);
+	phi[0] = d2r(base->ean[0]);
+	phi[1] = d2r(base->ean[1]);
+	phi[2] = d2r(base->ean[2]);
 
-	mtx_rot_ypr_wtp(Phi, Omega, Phi_dot); 			/*  find Phi_dot */
-	mtx_mul_scl(Phi_dot, 3, 1, ang->dev->st, Phi_inc); 	/*  find increment, assume constant rate */
-	mtx_rot_ypr_etr(Phi, R_old); 				/*  find rotation matrix for old angles */
-	mtx_rot_ypr_etr(Phi_inc, R_inc); 			/*  find rotation matrix for increment */
-	mtx_mul(R_inc, R_old, 3,3,3, R_new); 			/*  find resulting rotation matrix */
-	mtx_rot_ypr_rte(R_new, Phi_new); 			/*  find euler angles from new matrix */
+	mtx_rot_ypr_wtp(phi, omega, phi_dot); 			/*  find phi_dot */
+	mtx_mul_scl(phi_dot, 3, 1, ang->dev->st, phi_inc); 	/*  find increment, assume constant rate */
+	mtx_rot_ypr_etr(phi, r_old); 				/*  find rotation matrix for old angles */
+	mtx_rot_ypr_etr(phi_inc, r_inc); 			/*  find rotation matrix for increment */
+	mtx_mul(r_inc, r_old, 3,3,3, r_new); 			/*  find resulting rotation matrix */
+	mtx_rot_ypr_rte(r_new, phi_new); 			/*  find euler angles from new matrix */
 
 	/* back to radians, just cause... */
-	ang->ean[0] = r2d(Phi_new[0]);
-	ang->ean[1] = r2d(Phi_new[1]);
-	ang->ean[2] = r2d(Phi_new[2]);
+	ang->ean[0] = r2d(phi_new[0]);
+	ang->ean[1] = r2d(phi_new[1]);
+	ang->ean[2] = r2d(phi_new[2]);
 	/*  __HIC SUNT DRACONES__ -- END */
 
 	return 0;
