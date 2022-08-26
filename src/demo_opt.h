@@ -1,12 +1,14 @@
+// SPDX-License-Identifier: MIT
+/* Copyright (C) 2021 Thales Antunes de Oliveira Barretto */
 #ifdef __cplusplus
 	extern "C" {
 #endif
+#ifndef _DEMO_OPT_H_
+#define _DEMO_OPT_H_
 
-#ifndef _DEV_MPU_OPT_H_
-#define _DEV_MPU_OPT_H_
-
-#include "dev_mpu.h"
 #include <getopt.h>
+#include <stdbool.h>
+#include <libmpu6050/mpu6050_core.h>
 
 struct  mpu_opt {
 	bool quiet;	/* don't print to console	*/
@@ -30,13 +32,11 @@ struct  mpu_opt {
 	char n_por[16];	/* network port			*/
 };
 
-
 int mpu_opt_get(struct option *lopts, int argc, char **argv, struct mpu_opt *mopts);
 int mpu_opt_set(struct mpu_dev *dev, struct mpu_opt *mopts);
 void mpu_opt_pri(struct mpu_opt *mopts);
 
-#endif /* _DEV_MPU_OPT_H_ */
-
+#endif /* _DEMO_OPT_H_ */
 #ifdef __cplusplus
 	}
 #endif

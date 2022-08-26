@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+/* Copyright (C) 2021 Thales Antunes de Oliveira Barretto */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,10 +9,11 @@
 #include <sys/socket.h>
 #include <assert.h>
 #include <sys/ioctl.h>
-#include "dev_mpu.h"
+#include <libmpu6050/mpu6050_core.h>
 
-
+#define MPU_SOCK_BUFFSIZ 500
 int mpu_socket_connect(int *sfd, char *host, char *port)
+
 {
 	struct addrinfo		hints;		/* search criteria		*/
 	struct addrinfo		*result;	/* list of struct addrin	*/
@@ -88,25 +91,15 @@ int mpu_socket_makemsg(struct mpu_dev *dev, char *msg, char *buf)
 	strcat(msg, buf);
 	snprintf(buf, MPU_SOCK_BUFFSIZ,"%3.0lf Hz ", dev->sr);
 	strcat(msg, buf);
-	if(dev->cfg->temp_fifo_en) {
-		snprintf(buf, MPU_SOCK_BUFFSIZ, "T:%+.1lf°C ",*(dev->t));
-		strcat(msg, buf);
-	}
-	if(dev->cfg->accel_fifo_en) {
-		snprintf(buf, MPU_SOCK_BUFFSIZ,"Ax:%+lf Ay:%+lf Az:%+lf ", *(dev->Ax), *(dev->Ay), *(dev->Az));
-		strcat(msg, buf);
-	}
-	if(dev->cfg->xg_fifo_en) {
-		snprintf(buf, MPU_SOCK_BUFFSIZ,"Gx:%+lf ", *(dev->Gx));
-		strcat(msg, buf);
-	}
-	if(dev->cfg->yg_fifo_en) {
-		snprintf(buf, MPU_SOCK_BUFFSIZ,"Gy:%+lf ", *(dev->Gy));
-		strcat(msg, buf);
-	}
-	if(dev->cfg->zg_fifo_en) {
-		snprintf(buf, MPU_SOCK_BUFFSIZ,"Gz:%+lf ", *(dev->Gz));
-		strcat(msg, buf);
-	}
+	snprintf(buf, MPU_SOCK_BUFFSIZ, "T:%+.1lf°C ",*(dev->t));
+	strcat(msg, buf);
+	snprintf(buf, MPU_SOCK_BUFFSIZ,"Ax:%+lf Ay:%+lf Az:%+lf ", *(dev->Ax), *(dev->Ay), *(dev->Az));
+	strcat(msg, buf);
+	snprintf(buf, MPU_SOCK_BUFFSIZ,"Gx:%+lf ", *(dev->Gx));
+	strcat(msg, buf);
+	snprintf(buf, MPU_SOCK_BUFFSIZ,"Gy:%+lf ", *(dev->Gy));
+	strcat(msg, buf);
+	snprintf(buf, MPU_SOCK_BUFFSIZ,"Gz:%+lf ", *(dev->Gz));
+	strcat(msg, buf);
 	return 0;
 }

@@ -1,22 +1,30 @@
-#include <assert.h>
+// SPDX-License-Identifier: MIT
+/* Copyright (C) 2021 Thales Antunes de Oliveira Barretto */
+#include <stdlib.h>
+#include <stdio.h>
 #include <inttypes.h>
+#include <string.h>
 #include <getopt.h>
-#include "dev_mpu.h"
-#include "dev_mpu_print.h"
-#include "dev_mpu_opt.h"
-#include "dev_mpu_flt.h"
+#include <libmpu6050/mpu6050_core.h>
+#include "demo_opt.h"
+#include "demo_socket.h"
+#include "filter.h"
 
+#define MPU_MAXLINE 1024
+
+void snprint_data (struct mpu_dev *dev, char *msg, char *buf);
+void snprint_angle(struct mpu_ang *ang, char *msg, char *buf);
 
 struct option lopts[] = {
 	{"quiet",	no_argument,		0, 0},
 	{"reset",	no_argument,		0, 0},
+	{"calibrate",	no_argument,		0, 0},
 	{"clksel",	required_argument,	0, 0},
 	{"dlpf",	required_argument,	0, 0},
 	{"rate",	required_argument,	0, 0},
 	{"arange",	required_argument,	0, 0},
 	{"grange",	required_argument,	0, 0},
 	{"dump",	required_argument,	0, 0},
-	{"calibrate",	required_argument,	0, 0},
 	{"connect",	required_argument,	0, 0},
 	{0,		0,		   	0, 0},
 };
@@ -28,17 +36,23 @@ int main(int argc, char *argv[])
 
 	struct mpu_dev *dev = NULL;
 	if (mopts->re)
-		mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev, MPU_MODE_RESET);
+		mpu_init("/dev/i2c-1", &dev, MPU6050_RESET);
 	else
-		mpu_init("/dev/i2c-1", MPU6050_ADDR, &dev, MPU_MODE_RESTORE);
+		mpu_init("/dev/i2c-1", &dev, MPU6050_RESTORE);
 
-	assert(dev != NULL);
+	if (NULL == dev) {
+		fprintf(stderr,"Unable to create device, aborting\n");
+		abort();
+	}
 
 	mpu_opt_set(dev, mopts);
 
 	struct mpu_flt_dat *flt = NULL;
-	mpu_flt_com_init(dev, &flt);
-	assert(flt != NULL);
+	filter_init(dev, &flt);
+	if (NULL == flt) {
+		fprintf(stderr,"Unable to create filter, aborting\n");
+		abort();
+	}
 
 	int sfd = -1;
 	if (mopts->ne) {
@@ -49,29 +63,26 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	char *msg = malloc(sizeof(char)*MPU_MAXLINE);
-	char *buf = malloc(sizeof(char)*MPU_MAXLINE);
-
+	char *msg = calloc(1, sizeof(char)*MPU_MAXLINE);
+	char *buf = calloc(1, sizeof(char)*MPU_MAXLINE);
 
 	while(1) {
-		mpu_ctl_fifo_data(dev);
-		mpu_ctl_fix_axis(dev);
-		mpu_flt_com_update(flt);
-		mpu_print_all(dev, msg, buf);
-		mpu_ang_pri(flt->anf, msg, buf);
+		mpu_get_data(dev);
+		filter_update(flt);
+		snprint_data(dev, msg, buf);
+		snprint_angle(flt->anf, msg, buf);
 		strcat(msg,"\n");
 
-		if (!mopts->quiet) {
+		if (!mopts->quiet)
 			printf("%s", msg);
-		}
 
-		if (mopts->ne && (sfd >= 0)) {
+		if (mopts->ne && (sfd >= 0))
 			mpu_socket_sendmsg(&sfd, msg);
-		}
 
 		sprintf(msg,"%s", "");
 	}
-
+	filter_destroy(flt);
+	mpu_destroy(dev);
 	free(msg);
 	free(buf);
 	return 0;

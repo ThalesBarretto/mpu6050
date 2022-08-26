@@ -1,56 +1,48 @@
+PROG	=mpu6050
+PROGB	=$(PROG)-demo
+PROGV	=1
+
 CC	=gcc
-CFLAGS	=-g -fPIC
-WFLAGS	=-Wall \
-	 -Wextra \
-	 -Wpedantic \
-	 -Wsuggest-attribute=pure \
-	 -Wsuggest-attribute=const \
-	 -Wsuggest-attribute=noreturn \
-	 -Wsuggest-attribute=cold \
-	 -Wsuggest-attribute=malloc \
-	 -Wsuggest-attribute=format \
-	 -Wmissing-noreturn \
-	 -Wmissing-format-attribute \
-	 -Wtrampolines \
-	 -Wno-system-headers \
-	 -Wshadow \
-	 -Wundef \
-	 -Wexpansion-to-defined \
-	 -Wunused-macros \
-	 -Wbad-function-cast \
-	 -Wcast-align \
-	 -Wdangling-else \
-	 -Wlogical-op \
-	 -Wsign-compare \
-	 -Wsign-conversion\
-	 -Wfloat-conversion \
-	 -Wmisleading-indentation \
-	 -Wsequence-point \
-	 -Wmissing-braces \
-	 -Wlogical-not-parentheses 
+CPPFLAGS=
+CFLAGS	=-DNDEBUG -O2 -march=native -mtune=native -fPIC -Wall -Wextra -Wpedantic
+LIBS	=-lm -li2c -lmtx -lmpu6050
 
 SRC	=src
 BLD	=bld
 OBJ	=$(BLD)/obj
 BIN	=$(BLD)/bin
-PLAY	="/home/pi/play/mpu6050"
+MAN	=man/$(PROGB).1.gz
 
-LIBS	=-lm -li2c
+MOD	=mod
+MODULES	=$(wildcard	$(MOD)/*)
 SRCS	=$(wildcard	$(SRC)/*.c)
 HDRS	=$(wildcard	$(SRC)/*.h)
 OBJS	=$(patsubst	$(SRC)/%.c,$(OBJ)/%.o, $(SRCS))
-PKGS	=$(patsubst	$(BINS),$(BINS).tar.gz,$(BINS))
-BINS	=mock
+PKGS	=$(patsubst	%,%.tar.gz,$(PROGB))
 
+modules:
+	-for i in mod/*; do cd $$i && make all && cd ../../; done
 
-release: CFLAGS=-O2 -DNDEBUG
-release: WFLAGS=-Wall
-release: clean
-release: $(BIN)/$(BINS)
+modules_install:
+	-for i in mod/*; do cd $$i && make install && cd ../../; done
 
-crazy: CFLAGS=-Ofast -ftree-vectorize -march=native -mtune=native -DNDEBUG -DHAVE_INLINE -flto
-crazy: clean
-crazy: $(BIN)/$(BINS)
+modules_uninstall:
+	-for i in mod/*; do cd $$i && make uninstall && cd ../../; done
+
+modules_clean:
+	-for i in mod/*; do cd $$i && make clean && cd ../../; done
+
+manpages:
+	-cd man && make && cd ..
+
+manpages_install:
+	-cd man && make install && cd ..
+
+manpages_uninstall:
+	-cd man && make uninstall && cd ..
+
+manpages_clean:
+	-cd man && make clean && cd ..
 
 $(OBJ):
 	mkdir -p $@
@@ -61,28 +53,51 @@ $(BIN):
 $(OBJ)/%.o: $(SRC)/%.c | $(OBJ)
 	$(CC) $(WFLAGS) $(CFLAGS) $(LIBS) -c $< -o $@
 
-$(BIN)/$(BINS): $(OBJS) | $(BIN)
+$(BIN)/$(PROGB): $(OBJS) | $(BIN)
 	$(CC) $(WFLAGS) $(CFLAGS) $(LIBS) -o $@ $(OBJS) $(LDFLAGS)
 
-$(BLD)/$(PKGS): release 
-	tar -czvf $@ $(BIN)/$(BINS)
+release: CFLAGS=-O2 -DNDEBUG
+release: WFLAGS=-Wall
+release: clean
+release: $(BIN)/$(PROGB)
 
-all:	$(BIN)/$(BINS)
+clean: manpages_clean
+	$(RM) -rf $(BLD)
 
-clean:
-	$(RM) -r $(BIN) $(OBJ)
+dist: release 
+	tar -czvf $@ $(BIN)/$(PROGB)
 
-dist:	$(BLD)/$(PKGS)
+all:	modules modules_install $(BIN)/$(PROGB) manpages
 
-tags:
-	cd $(SRC) && ctags -R 
+# Install/uninstall instructions
+INSTALL=install
+INSTDIR=/opt
+prefix=/usr
+INCDIR=$(prefix)/include
+BINDIR=$(prefix)/bin
+LIBDIR=$(prefix)/lib
+MPGDIR=$(prefix)/share/man/man1
 
-distclean:
-	$(RM) $(BLD)/$(PKGS)
+install: manpages_install
+	-sudo $(INSTALL) -D --owner=root --group=root $(BIN)/$(PROGB) $(INSTDIR)/$(PROG)/$(PROGB)
+	-sudo ln -sf $(INSTDIR)/$(PROG)/$(PROGB) $(BINDIR)/$(PROGB) 
 
-pi:
-	scp -r $(SRC) pi:$(PLAY)
-	scp  Makefile pi:$(PLAY)
-	ssh  pi 'cd $(PLAY) && $(MAKE) release'
+uninstall: manpages_uninstall
+	-sudo rm -rf $(INSTDIR)/$(PROG)
+	-sudo rm -f $(BINDIR)/$(PROGB)
 
-.PHONY: all clean dist distclean pi fast
+remove: uninstall
+
+remove_modules: modules_uninstall
+
+remove_manpages: manpages_uninstall
+
+remove_all: remove remove_modules remove_manpages
+
+clean_modules: modules_clean
+
+clean_manpages: manpages_clean
+
+clean_all: modules_clean clean manpages_clean
+
+.PHONY: all clean install uninstall modules modules_clean modules_install modules_uninstall 

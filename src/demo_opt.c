@@ -1,4 +1,9 @@
-#include "dev_mpu_opt.h"
+// SPDX-License-Identifier: MIT
+/* Copyright (C) 2021 Thales Antunes de Oliveira Barretto */
+#include <stdio.h>
+#include <string.h>
+#include <libmpu6050/mpu6050_core.h>
+#include "demo_opt.h"
 
 int mpu_opt_get(struct option *opts, int argc, char **argv, struct mpu_opt *mopts)
 {
@@ -13,9 +18,9 @@ int mpu_opt_get(struct option *opts, int argc, char **argv, struct mpu_opt *mopt
 			if (strcmp(opts[i].name, "arange"	) == 0) { mopts->ar = true; sscanf(optarg, "%u", &mopts->a_ran ); break;}
 			if (strcmp(opts[i].name, "grange"	) == 0) { mopts->gr = true; sscanf(optarg, "%u", &mopts->g_ran ); break;}
 			if (strcmp(opts[i].name, "dump"		) == 0) { mopts->du = true; sscanf(optarg, "%s",  mopts->d_fln ); break;}
-			if (strcmp(opts[i].name, "calibrate"	) == 0) { mopts->ca = true; sscanf(optarg, "%u", &mopts->c_sam ); break;}
-			if (strcmp(opts[i].name, "reset"	) == 0) { mopts->re = true;					  break;}
-			if (strcmp(opts[i].name, "quiet"	) == 0) { mopts->quiet = true;					  break;}
+			if (strcmp(opts[i].name, "calibrate"	) == 0) { mopts->ca = true; break;}
+			if (strcmp(opts[i].name, "reset"	) == 0) { mopts->re = true; break;}
+			if (strcmp(opts[i].name, "quiet"	) == 0) { mopts->quiet = true; break;}
 			if (strcmp(opts[i].name, "connect"	) == 0) { mopts->ne = true; 
 				sscanf(strtok(optarg, ":"), "%s", mopts->n_hos);
 				sscanf(strtok(NULL  , ","), "%s", mopts->n_por);}
@@ -61,7 +66,7 @@ int mpu_opt_set(struct mpu_dev *dev, struct mpu_opt *mopts)
 		mpu_ctl_dump(dev,  mopts->d_fln);
 
 	if (mopts->ca)
-		mpu_ctl_calibration(dev);
+		mpu_ctl_calibrate(dev);
 
 	return 0;
 }
