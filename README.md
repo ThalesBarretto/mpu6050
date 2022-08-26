@@ -4,6 +4,8 @@ This is a demo application for the libmpu6050 driver.
 
 You can attach the sensor to the RPi, install, and run the demo.
 
+*`TODO:`* investigate [aliasing bug](<https://stackoverflow.com/questions/2958633/gcc-strict-aliasing-and-horror-stories>)
+
 ## What you can do with it
 
 - Get raw sensor data

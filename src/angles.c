@@ -43,6 +43,10 @@ int angles_gyro(struct mpu_ang *base, struct mpu_ang *ang)
 	 *  PLEASE DON'T CHANGE IT
 	 *  For some reason the FPU will misbehave
 	 *
+	 * UPDATE: this may be dua to aliasing behaviour.
+	 * TODO: try -fno-strict-aliasing
+	 * TODO: try __attribute__((noinline))
+	 * TODO: discussion <https://stackoverflow.com/questions/2958633/gcc-strict-aliasing-and-horror-stories>
 	 */
 	long double omega[3];	// PQR gyro rates
 	long double phi[3];	// Euler last angles
