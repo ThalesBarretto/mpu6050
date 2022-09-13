@@ -51,10 +51,10 @@ $(BIN):
 	mkdir -p $@
 
 $(OBJ)/%.o: $(SRC)/%.c | $(OBJ)
-	$(CC) $(WFLAGS) $(CFLAGS) $(LIBS) -c $< -o $@
+	$(CC) $(WFLAGS) $(CFLAGS) -c $< -o $@ $(LIBS)
 
 $(BIN)/$(PROGB): $(OBJS) | $(BIN)
-	$(CC) $(WFLAGS) $(CFLAGS) $(LIBS) -o $@ $(OBJS) $(LDFLAGS)
+	$(CC) $(WFLAGS) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(LDFLAGS)
 
 release: CFLAGS=-O2 -DNDEBUG
 release: WFLAGS=-Wall
