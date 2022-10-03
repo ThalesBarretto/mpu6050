@@ -83,7 +83,7 @@ int angles_gyro(struct mpu_ang *base, struct mpu_ang *ang)
 }
 
 /*  Estimate angles from accel */
-#ifndef square(x)
+#ifndef square
 #define square(x) ((x) * (x))
 #endif
 int angles_accel(struct mpu_ang *ang)
@@ -95,8 +95,8 @@ int angles_accel(struct mpu_ang *ang)
 
 	/* ASSUME ang is provided in DEGREES  */
 	ang->rho =  r2d((atan2 (sqrt(*(ang->dev->Ax2) + *(ang->dev->Ay2)), -*(ang->dev->Az))));
-	ang->ean[0] = -r2d((atan2(1.L* *(ang->dev->Ay), -1.L * *(ang->dev->Az)))); /* invert phi to express ypr(frd frame) */
-	ang->ean[1] = r2d((atan2(-1.L* *(ang->dev->Ax), sqrt(square(*(ang->dev->Ay)) + square(*(ang->dev->Az))) ))); /* invert theta to express ypr(frd frame) */
+	ang->ean[0] = r2d((atan2(-1.L* *(ang->dev->Ay), -1.L * *(ang->dev->Az)))); /* invert phi to express ypr(frd frame) */
+	ang->ean[1] = r2d((atan2(-1.L* *(ang->dev->Ax), sqrt(square(-1.L * *(ang->dev->Ay)) + square(-1.L * *(ang->dev->Az))) ))); /* invert theta to express ypr(frd frame) */
 	ang->ean[2] = 0;	/* accel can't provide psi */
 	return 0;
 }
