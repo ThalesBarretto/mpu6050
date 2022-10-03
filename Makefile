@@ -100,4 +100,8 @@ clean_manpages: manpages_clean
 
 clean_all: modules_clean clean manpages_clean
 
+again: remove clean all install
+
+again_all: remove_all clean_all all install
+
 .PHONY: all clean install uninstall modules modules_clean modules_install modules_uninstall 
