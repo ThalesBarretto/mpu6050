@@ -83,6 +83,9 @@ int angles_gyro(struct mpu_ang *base, struct mpu_ang *ang)
 }
 
 /*  Estimate angles from accel */
+#ifndef square(x)
+#define square(x) ((x) * (x))
+#endif
 int angles_accel(struct mpu_ang *ang)
 {
 	if (NULL == ang) {
