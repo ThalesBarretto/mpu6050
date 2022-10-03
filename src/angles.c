@@ -93,7 +93,7 @@ int angles_accel(struct mpu_ang *ang)
 	/* ASSUME ang is provided in DEGREES  */
 	ang->rho =  r2d((atan2 (sqrt(*(ang->dev->Ax2) + *(ang->dev->Ay2)), -*(ang->dev->Az))));
 	ang->ean[0] = -r2d((atan2(1.L* *(ang->dev->Ay), -1.L * *(ang->dev->Az)))); /* invert phi to express ypr(frd frame) */
-	ang->ean[1] = -r2d((atan2(1.L* *(ang->dev->Ax), -1.L * *(ang->dev->Az)))); /* invert theta to express ypr(frd frame) */
+	ang->ean[1] = r2d((atan2(-1.L* *(ang->dev->Ax), sqrt(square(*(ang->dev->Ay)) + square(*(ang->dev->Az))) ))); /* invert theta to express ypr(frd frame) */
 	ang->ean[2] = 0;	/* accel can't provide psi */
 	return 0;
 }
