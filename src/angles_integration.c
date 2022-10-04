@@ -30,14 +30,14 @@ int angles_integrate_trapezoidal(struct mpu_ang *base, struct mpu_ang *ang)
 	long double psi_euler	= psi	+ (T * psi_dot);
 
 	/* re-evaluate rate in radians/s */
-	long double phi_euler_dot	= phi_euler	- phi;
-	long double theta_euler_dot	= theta_euler	- theta;
-	long double psi_euler_dot	= psi_euler	- psi;
+	long double phi_euler_dot	= P + tan(Q * sin(phi_euler) + R * cos(phi_euler));
+	long double theta_euler_dot	= Q * cos(phi_euler) - R * sin(phi_euler);
+	long double psi_euler_dot	= ((Q * sin(phi_euler)) + (R * cos(phi_euler))) / cos(theta_euler);
 
 	/* find Phi[k] by second order rate estimation, send back to degs */
-	ang->ean[0] = r2d(phi	+ ((T*(phi_euler_dot	+ phi_dot	))/2.L));
-	ang->ean[1] = r2d(theta	+ ((T*(theta_euler_dot	+ theta_dot	))/2.L));
-	ang->ean[2] = r2d(psi	+ ((T*(psi_euler_dot	+ psi_dot	))/2.L));
+	ang->ean[0] = r2d(phi	+ ((T/2.L)*(phi_euler_dot	+ phi_dot	)));
+	ang->ean[1] = r2d(theta	+ ((T/2.L)*(theta_euler_dot	+ theta_dot	)));
+	ang->ean[2] = r2d(psi	+ ((T/2.L)*(psi_euler_dot	+ psi_dot	)));
 
 	return 0;
 }
