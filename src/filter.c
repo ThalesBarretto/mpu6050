@@ -48,7 +48,8 @@ int filter_destroy(struct mpu_flt_dat *flt)
 int filter_update(struct mpu_flt_dat *flt)
 {
 	angles_accel(flt->ana);
-	angles_gyro(flt->anf, flt->ang);
+	//angles_gyro(flt->anf, flt->ang);
+	angles_integrate_trapezoidal(flt->anf, flt->ang);
 	if (fabs((*(flt->dev->AM) - 1) > flt->mtr)) {	/* motion detected */
 		flt->anf->ean[0] =  flt->ang->ean[0];
 		flt->anf->ean[1] =  flt->ang->ean[1];
