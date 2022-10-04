@@ -4,7 +4,7 @@
 #include <libmtx/mtx.h>
 #include <tgmath.h>
 
-int angles_intregrate_trapezoidal(struct mpu_ang *base, struct mpu_ang *ang)
+int angles_integrate_trapezoidal(struct mpu_ang *base, struct mpu_ang *ang)
 {
 	/* sampling period */
 	long double T = ang->dev->st;
