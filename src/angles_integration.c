@@ -8,6 +8,7 @@ int angles_integrate_trapezoidal(struct mpu_ang *base, struct mpu_ang *ang)
 {
 	/* sampling period */
 	long double T = ang->dev->st;
+	size_t iterations = 1000;
 
 	/* rate Gyro data - from degs/s to radians/s */
 	long double P =	 d2r(*(ang->dev->Gx));
@@ -19,6 +20,9 @@ int angles_integrate_trapezoidal(struct mpu_ang *base, struct mpu_ang *ang)
 	long double theta = d2r(base->ean[1]);
 	long double psi	  = d2r(base->ean[2]);
 
+
+	T /= iterations;
+	for(size_t i = 1; i < iterations ; i++) {
 	/* uses Table 2.5-1 Formulas */
 	long double phi_dot	= P + tan(Q * sin(phi) + R * cos(phi));
 	long double theta_dot	= Q * cos(phi) - R * sin(phi);
@@ -34,10 +38,15 @@ int angles_integrate_trapezoidal(struct mpu_ang *base, struct mpu_ang *ang)
 	long double theta_euler_dot	= Q * cos(phi_euler) - R * sin(phi_euler);
 	long double psi_euler_dot	= ((Q * sin(phi_euler)) + (R * cos(phi_euler))) / cos(theta_euler);
 
+	phi	+= ((T/2.L)*(phi_euler_dot	+ phi_dot	));
+	theta	+= ((T/2.L)*(theta_euler_dot	+ theta_dot	));
+	psi	+= ((T/2.L)*(psi_euler_dot	+ psi_dot	));
+	}
+
 	/* find Phi[k] by second order rate estimation, send back to degs */
-	ang->ean[0] = r2d(phi	+ ((T/2.L)*(phi_euler_dot	+ phi_dot	)));
-	ang->ean[1] = r2d(theta	+ ((T/2.L)*(theta_euler_dot	+ theta_dot	)));
-	ang->ean[2] = r2d(psi	+ ((T/2.L)*(psi_euler_dot	+ psi_dot	)));
+	ang->ean[0] = r2d(phi	);
+	ang->ean[1] = r2d(theta	);
+	ang->ean[2] = r2d(psi	);
 
 	return 0;
 }
