@@ -31,7 +31,7 @@ int angles_integrate_trapezoidal(struct mpu_ang *base, struct mpu_ang *ang)
 	/* first order integration */
 	long double phi_euler	= phi	+ (T * phi_dot);
 	long double theta_euler	= theta	+ (T * theta_dot);
-	long double psi_euler	= psi	+ (T * psi_dot);
+	//long double psi_euler	= psi	+ (T * psi_dot);
 
 	/* re-evaluate rate in radians/s */
 	long double phi_euler_dot	= P + tan(Q * sin(phi_euler) + R * cos(phi_euler));

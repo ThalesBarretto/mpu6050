@@ -21,6 +21,8 @@ struct  mpu_opt {
 	bool re;	/* init reset mode		*/
 	bool du;	/* dump registers		*/
 	bool ne;	/* network start		*/
+	bool ts;	/* set time to run 		*/
+	unsigned int timesec;	/* time seconds to run 		*/
 	unsigned int clksel;	/* clksel value			*/
 	unsigned int dlpfv;	/* samplerate value		*/
 	unsigned int smprt;	/* samplerate value		*/
