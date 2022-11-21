@@ -10,6 +10,7 @@
 #include "demo_socket.h"
 #include "filter.h"
 #include "state.h"
+#include "state_math.h"
 
 #define debug_exit(X) fprintf(stderr, "DEBUG_EXIT:\nline:%i func:%s\n",__LINE__, __func__ ); exit((X));
 #define MPU_MAXLINE 1024
@@ -21,7 +22,9 @@ struct option lopts[] = {
 	{"quiet",	no_argument,		0, 0},
 	{"reset",	no_argument,		0, 0},
 	{"calibrate",	no_argument,		0, 0},
+	{"steps",	required_argument,	0, 0},
 	{"timesec",	required_argument,	0, 0},
+	{"gforce",	required_argument,	0, 0},
 	{"clksel",	required_argument,	0, 0},
 	{"dlpf",	required_argument,	0, 0},
 	{"rate",	required_argument,	0, 0},
@@ -52,7 +55,6 @@ int main(int argc, char *argv[])
 
 	mpu_opt_set(dev, mopts);
 	/* initialize a series of states */
-	state_t State = state_zero();
 	series_t *Series = series_new(1);
 	/* employ 120 seconds of samples */
 	/* Use Trapezoidal method, in 100 steps */
@@ -60,7 +62,11 @@ int main(int argc, char *argv[])
 		.method = RK_TRAPEZ,
 		.steps = 100
 	};
-	position_t origin = { .p={ 0, 0, 0 }};
+	if(mopts->is){
+		trapez100.steps = mopts->steps;
+	}else {
+		fprintf(stderr, "no steps  provided, using 100\n");
+	}
 	position_t cm_pos = { .p={ 0, 0, 0 }};
 	imu_t Imu = {
 		.description = "MPU-6050",
@@ -73,16 +79,17 @@ int main(int argc, char *argv[])
 		}
 	};
 
-	printf("Accel_range	=%lf\n", dev->afr);
-	printf("Gyro_range	=%lf\n", dev->gfr);
-	printf("Fs		=%lf\n", dev->sr );
 	Imu.cfg.Accel_range	= dev->afr;
 	Imu.cfg.Gyro_range	= dev->gfr;
 	Imu.cfg.Fs		= dev->sr;
+	if(mopts->gf){
+		Imu.gforce = mopts->gforce;
+	}else {
+		fprintf(stderr, "no gforce provided, using standard gravity\n");
+		Imu.gforce = gD;
+	}
+
 	series_init(Series, "Series testing", &Imu, &trapez100, (Imu.cfg.Fs * mopts->timesec));
-	printf("Run for %u seconds\n", mopts->timesec);
-	printf("Run for %zu size\n", Series->size);
-	exit(EXIT_SUCCESS);
 
 	struct mpu_flt_dat *flt = NULL;
 	filter_init(dev, &flt);
@@ -103,12 +110,27 @@ int main(int argc, char *argv[])
 	char *msg = calloc(1, sizeof(char)*MPU_MAXLINE);
 	char *buf = calloc(1, sizeof(char)*MPU_MAXLINE);
 
-	while(1) {
+	for( size_t i = 0 ;dev->samples < Series->size;) {
 		mpu_get_data(dev);
+		Imu.dat.Gx= d2r(*(dev->Gx));
+		Imu.dat.Gy= d2r(*(dev->Gy));
+		Imu.dat.Gz= d2r(*(dev->Gz));
+		Imu.dat.Ax= Imu.gforce * *(dev->Ax);
+		Imu.dat.Ay= Imu.gforce * *(dev->Ay);
+		Imu.dat.Az= Imu.gforce * *(dev->Az);
 		filter_update(flt);
-
-		snprint_data(dev, msg, buf);
-		snprint_angle(flt->anf, msg, buf);
+		Series->last->X.phi	= d2r(flt->anf->ean[0]);
+		Series->last->X.theta	= d2r(flt->anf->ean[1]);
+		Series->last->X.psi	= d2r(flt->anf->ean[2]);
+		Series->last->X.P	= Series->imu->dat.Gx;
+		Series->last->X.Q	= Series->imu->dat.Gy;
+		Series->last->X.R	= Series->imu->dat.Gz;
+		Series->last->X.fx	= Series->imu->dat.Ax;
+		Series->last->X.fy	= Series->imu->dat.Ay;
+		Series->last->X.fz	= Series->imu->dat.Az;
+		series_integrate_last(Series);
+		sprintf(buf, "%5zu " , Series->last->count); strcat(msg, buf);
+		snprint_state(&Series->last->X, msg, buf);
 		strcat(msg,"\n");
 
 		if (!mopts->quiet)
@@ -118,6 +140,8 @@ int main(int argc, char *argv[])
 			mpu_socket_sendmsg(&sfd, msg);
 
 		sprintf(msg,"%s", "");
+
+		record_push(Series, Series->first + i);
 	}
 	filter_destroy(flt);
 	mpu_destroy(dev);

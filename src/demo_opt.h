@@ -22,13 +22,17 @@ struct  mpu_opt {
 	bool du;	/* dump registers		*/
 	bool ne;	/* network start		*/
 	bool ts;	/* set time to run 		*/
-	unsigned int timesec;	/* time seconds to run 		*/
-	unsigned int clksel;	/* clksel value			*/
+	bool gf;	/* set g' force magnitude	*/ 
+	bool is;	/* set g' force magnitude	*/ 
+	unsigned int timesec;	/* samplerate value		*/
+	unsigned int steps;	/* integration steps 		*/
 	unsigned int dlpfv;	/* samplerate value		*/
+	unsigned int clksel;	/* clksel value			*/
 	unsigned int smprt;	/* samplerate value		*/
 	unsigned int a_ran;	/* accel range value		*/
 	unsigned int g_ran;	/* gyro range value		*/
 	unsigned int c_sam;	/* cal samples value		*/
+	long double gforce;	/* gforce value */
 	char d_fln[256];/* dump filename		*/
 	char n_hos[256];/* network host			*/
 	char n_por[16];	/* network port			*/

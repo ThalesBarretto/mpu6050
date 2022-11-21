@@ -12,7 +12,9 @@ int mpu_opt_get(struct option *opts, int argc, char **argv, struct mpu_opt *mopt
 	while ((c = getopt_long(argc, argv, "", opts, &i)) != -1) {
 		switch(c) {
 		case 0:
+			if (strcmp(opts[i].name, "steps"	) == 0) { mopts->is = true; sscanf(optarg, "%u", &mopts->steps); break;}
 			if (strcmp(opts[i].name, "timesec"	) == 0) { mopts->ts = true; sscanf(optarg, "%u", &mopts->timesec); break;}
+			if (strcmp(opts[i].name, "gforce"	) == 0) { mopts->gf = true; sscanf(optarg, "%Lf", &mopts->gforce); break;}
 			if (strcmp(opts[i].name, "clksel"	) == 0) { mopts->cs = true; sscanf(optarg, "%u", &mopts->clksel); break;}
 			if (strcmp(opts[i].name, "dlpf"		) == 0) { mopts->dl = true; sscanf(optarg, "%u", &mopts->dlpfv ); break;}
 			if (strcmp(opts[i].name, "rate"		) == 0) { mopts->sr = true; sscanf(optarg, "%u", &mopts->smprt ); break;}
@@ -75,8 +77,10 @@ int mpu_opt_set(struct mpu_dev *dev, struct mpu_opt *mopts)
 void mpu_opt_pri(struct mpu_opt *mopts)
 {
 	printf("OPTIONS:\n");
+	printf("STEPS:%5s %d\n", (mopts->is ? "true" : "false"), mopts->steps);
+	printf("GFORCE:%5s %Lf\n", (mopts->gf ? "true" : "false"), mopts->gforce);
 	printf("TIMESEC:%5s %d\n", (mopts->ts ? "true" : "false"), mopts->timesec);
-	printf("CLKSEL:%5s %d\n", (mopts->dl ? "true" : "false"), mopts->dlpfv);
+	printf("CLKSEL:%5s %d\n", (mopts->dl ? "true" : "false"), mopts->clksel);
 	printf("DLPF:%5s %d\n", (mopts->dl ? "true" : "false"), mopts->dlpfv);
 	printf("SAMPLING_RATE:%5s %d\n", (mopts->sr ? "true" : "false"), mopts->smprt);
 	printf("ACCEL_FULL_RANGE:%5s %d\n", (mopts->ar ? "true" : "false"), mopts->a_ran);

@@ -140,6 +140,7 @@ struct imu_t {
 	imu_cfg_t cfg;
 	imu_data_t dat;
 	relpos_t relpos; /* pose relative to center of mass */
+	long double gforce;
 	char description[MAXLINE];
 };
 
@@ -196,11 +197,14 @@ state_t state_zero(void);
 void series_init(series_t *Series, char * Description, imu_t * Imu, const integration_t * Integration, size_t Size);
 
 void series_test(void);
+void snprint_state(state_t *S, char *msg, char *buf);
 
 state_t* state_new(size_t many);
 record_t* record_new(size_t many);
 series_t* series_new(size_t many);
-
+void record_push(series_t *Series, record_t *Record);
+void state_integrate_trapezoidal(state_t *S, mpu_data_t Fs, size_t steps);
+void series_integrate_last(series_t *S);
 #endif /* _STATE_H_ */
 #ifdef __cplusplus
 	}

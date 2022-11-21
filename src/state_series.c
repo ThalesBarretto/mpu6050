@@ -153,7 +153,7 @@ void series_test(void)
 		.steps = 100
 	};
 
-	position_t origin = { .p={ 0, 0, 0 }};
+//	position_t origin = { .p={ 0, 0, 0 }};
 	position_t cm_pos = { .p={ 0, 0, 0 }};
 
 	imu_t Imu = {
@@ -167,7 +167,7 @@ void series_test(void)
 		}
 	};
 
-	state_t State = state_zero();
+//	state_t State = state_zero();
 	series_t *Series = series_new(1);
 	series_init(Series, "Series testing", &Imu, &trapez100, 10ul);
 

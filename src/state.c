@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: MIT
 /* Copyright (C) 2021 Thales Antunes de Oliveira Barretto */
 #include "state.h"
+#include "state_math.h"
 #include <tgmath.h>
 #include <string.h>
 #include <stdio.h>
+
+void series_integrate_last(series_t *S)
+{
+	state_integrate_trapezoidal(&(S->last->X), S->imu->cfg.Fs, S->integ.steps);
+}
 
 /* goes from S[k-1] to S[k] */
 void state_integrate_trapezoidal(state_t *S, mpu_data_t Fs, size_t steps)
@@ -32,7 +38,7 @@ void state_integrate_trapezoidal(state_t *S, mpu_data_t Fs, size_t steps)
 				 - S->fz * cos(S->phi) * cos(S->theta) - gD;
 		S->vn += ( an * T);
 		S->ve += ( ae * T);
-		S->vu += (-ad * T);
+		S->vu += ( ad * T);
 		S->pn += S->vn * T;
 		S->pe += S->ve * T;
 		S->pu += S->vu * T;
@@ -94,27 +100,29 @@ void set_PHI_dot(state_t *S)
 void snprint_state(state_t *S, char *msg, char *buf)
 {
 	/* derivatives */
-	sprintf(buf, "dphi:%+.2Lf ", S->phi); strcat(msg, buf);
-	sprintf(buf, "dthe:%+.2Lf ", S->theta); strcat(msg, buf);
-	sprintf(buf, "dpsi:%+.2Lf ", S->psi); strcat(msg, buf);
-	sprintf(buf, "vn:%+.2Lf ", S->vn); strcat(msg, buf);
-	sprintf(buf, "ve:%+.2Lf ", S->ve); strcat(msg, buf);
-	sprintf(buf, "vu:%+.2Lf ", S->vu); strcat(msg, buf);
+	//sprintf(buf, "dph:%+.2Lf ",	r2d(S->dot_phi));	strcat(msg, buf);
+	//sprintf(buf, "dth:%+.2Lf ",	r2d(S->dot_theta));	strcat(msg, buf);
+	//sprintf(buf, "dps:%+.2Lf ",	r2d(S->dot_psi));	strcat(msg, buf);
+	
+	sprintf(buf, "phi:%+.2Lf ",	r2d(S->phi));	strcat(msg, buf);
+	sprintf(buf, "the:%+.2Lf ",	r2d(S->theta));	strcat(msg, buf);
+	sprintf(buf, "psi:%+.2Lf ",	r2d(S->psi));	strcat(msg, buf);
+
+	sprintf(buf, "fx:%+.5Lf ",	S->fx);	strcat(msg, buf);
+	sprintf(buf, "fy:%+.5Lf ",	S->fy); strcat(msg, buf);
+	sprintf(buf, "fz:%+.5Lf ",	S->fz); strcat(msg, buf);
+
+	sprintf(buf, "vn:%+.5Lf ",	S->vn);	strcat(msg, buf);
+	sprintf(buf, "ve:%+.5Lf ", 	S->ve);	strcat(msg, buf);
+	sprintf(buf, "vu:%+.5Lf ", 	S->vu);	strcat(msg, buf);
 
 	/* attitude, position */
-	sprintf(buf, "phi:%+.2Lf ", S->phi); strcat(msg, buf);
-	sprintf(buf, "the:%+.2Lf ", S->theta); strcat(msg, buf);
-	sprintf(buf, "psi:%+.2Lf ", S->psi); strcat(msg, buf);
-	sprintf(buf, "pn:%+.2Lf ", S->pn); strcat(msg, buf);
-	sprintf(buf, "pe:%+.2Lf ", S->pe); strcat(msg, buf);
-	sprintf(buf, "pu:%+.2Lf ", S->pu); strcat(msg, buf);
+	sprintf(buf, "pn:%+.5Lf ",	S->pn);	strcat(msg, buf);
+	sprintf(buf, "pe:%+.5Lf ",	S->pe);	strcat(msg, buf);
+	sprintf(buf, "pu:%+.5Lf ",	S->pu);	strcat(msg, buf);
 
-	/* input vector */
-	sprintf(buf, "fx:%+.2Lf ", S->fx); strcat(msg, buf);
-	sprintf(buf, "fy:%+.2Lf ", S->fy); strcat(msg, buf);
-	sprintf(buf, "fz:%+.2Lf ", S->fz); strcat(msg, buf);
-	sprintf(buf, "P:%+.2Lf ", S->pn); strcat(msg, buf);
-	sprintf(buf, "Q:%+.2Lf ", S->pe); strcat(msg, buf);
-	sprintf(buf, "R:%+.2Lf ", S->pu); strcat(msg, buf);
+	//sprintf(buf, "P:%+.2Lf ",	S->P);	strcat(msg, buf);
+	//sprintf(buf, "Q:%+.2Lf ",	S->Q);	strcat(msg, buf);
+	//sprintf(buf, "R:%+.2Lf ",	S->R);	strcat(msg, buf);
 }
 
