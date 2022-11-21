@@ -8,11 +8,11 @@
 
 void series_integrate_last(series_t *S)
 {
-	state_integrate_trapezoidal(&(S->last->X), S->imu->cfg.Fs, S->integ.steps);
+	state_integrate_trapezoidal(&(S->last->X), S->imu->cfg.Fs, S->integ.steps, S->imu->gforce);
 }
 
 /* goes from S[k-1] to S[k] */
-void state_integrate_trapezoidal(state_t *S, mpu_data_t Fs, size_t steps)
+void state_integrate_trapezoidal(state_t *S, mpu_data_t Fs, size_t steps, long double gforce)
 {
 	long double T = 1/(steps *Fs); /* step period */
 	for(size_t i = 0; i < steps ; i++) {
@@ -27,6 +27,7 @@ void state_integrate_trapezoidal(state_t *S, mpu_data_t Fs, size_t steps)
 		S->phi	 += ((T/2.L)*(dot_phi_euler	+ S->dot_phi	));
 		S->theta += ((T/2.L)*(dot_theta_euler	+ S->dot_theta	));
 		S->psi	 += ((T/2.L)*(dot_psi_euler	+ S->dot_psi	));
+		S->psi	 = fmodl(S->psi, M_PI);
 		long double an =   S->fx * cos(S->psi) * cos(S->theta) \
 				 + S->fy * (-sin(S->phi) * sin(S->theta) * cos(S->psi) + sin(S->psi) * cos(S->phi)) \
 				 + S->fz * (-sin(S->phi) * sin(S->psi) - sin(S->theta) * cos(S->phi) * cos(S->psi)) ;
@@ -35,7 +36,7 @@ void state_integrate_trapezoidal(state_t *S, mpu_data_t Fs, size_t steps)
 			         + S->fz * ( sin(S->phi) * cos(S->psi) - sin(S->psi) * sin(S->theta) * cos(S->phi)) ;
 		long double ad = - S->fz * sin(S->theta) \
 				 - S->fy * sin(S->phi) * cos(S->theta) \
-				 - S->fz * cos(S->phi) * cos(S->theta) - gD;
+				 - S->fz * cos(S->phi) * cos(S->theta) - gforce;
 		S->vn += ( an * T);
 		S->ve += ( ae * T);
 		S->vu += ( ad * T);

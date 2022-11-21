@@ -2,7 +2,7 @@
 #ifdef M_PI
 #define PI M_PI
 #else
-#define PI (3.1415926535897932384)
+#define PI (3.1415926535897932384L)
 #define M_PI PI
 #endif
 #endif

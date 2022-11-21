@@ -203,7 +203,7 @@ state_t* state_new(size_t many);
 record_t* record_new(size_t many);
 series_t* series_new(size_t many);
 void record_push(series_t *Series, record_t *Record);
-void state_integrate_trapezoidal(state_t *S, mpu_data_t Fs, size_t steps);
+void state_integrate_trapezoidal(state_t *S, mpu_data_t Fs, size_t steps, long double gforce);
 void series_integrate_last(series_t *S);
 #endif /* _STATE_H_ */
 #ifdef __cplusplus
