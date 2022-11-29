@@ -32,6 +32,8 @@ int angles_init(struct mpu_dev *, struct mpu_ang **ang);
 int angles_destroy(struct mpu_ang * ang);
 int angles_accel(struct mpu_ang * ang);
 int angles_gyro(struct mpu_ang * base, struct mpu_ang *ang);
+int angles_integrate_trapezoidal(struct mpu_ang *base, struct mpu_ang *ang);
+int angles_integrate_euler(struct mpu_ang *base, struct mpu_ang *ang);
 #endif /* _ANGLES_H_ */
 #ifdef __cplusplus
 	}

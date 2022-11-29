@@ -51,10 +51,10 @@ $(BIN):
 	mkdir -p $@
 
 $(OBJ)/%.o: $(SRC)/%.c | $(OBJ)
-	$(CC) $(WFLAGS) $(CFLAGS) $(LIBS) -c $< -o $@
+	$(CC) $(WFLAGS) $(CFLAGS) -c $< -o $@ $(LIBS)
 
 $(BIN)/$(PROGB): $(OBJS) | $(BIN)
-	$(CC) $(WFLAGS) $(CFLAGS) $(LIBS) -o $@ $(OBJS) $(LDFLAGS)
+	$(CC) $(WFLAGS) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(LDFLAGS)
 
 release: CFLAGS=-O2 -DNDEBUG
 release: WFLAGS=-Wall
@@ -99,5 +99,9 @@ clean_modules: modules_clean
 clean_manpages: manpages_clean
 
 clean_all: modules_clean clean manpages_clean
+
+again: remove clean all install
+
+again_all: remove_all clean_all all install
 
 .PHONY: all clean install uninstall modules modules_clean modules_install modules_uninstall 

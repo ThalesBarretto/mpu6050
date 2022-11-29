@@ -9,12 +9,12 @@
 
 void snprint_data(struct mpu_dev *dev, char *msg, char *buf)
 {
-	sprintf(buf, "%12llu ", dev->samples);
+	sprintf(buf, "%5llu ", dev->samples);
 	strcat(msg, buf);
-	sprintf(buf, "Hz:%3.0lf ", dev->sr);
-	strcat(msg,buf);
-	sprintf(buf,  "T:%+.1lf",*(dev->t));
-	strcat(msg,buf);
+	//sprintf(buf, "Hz:%3.0lf ", dev->sr);
+	//strcat(msg,buf);
+	//sprintf(buf,  "T:%+.1lf",*(dev->t));
+	//strcat(msg,buf);
 	sprintf(buf, " |A|=%lf ", *(dev->AM) );
 	strcat(msg,buf);
 	sprintf(buf, "Ax:%+lf Ay:%+lf Az:%+lf ", *(dev->Ax), *(dev->Ay), *(dev->Az));
