@@ -27,19 +27,21 @@ void state_integrate_trapezoidal(state_t *S, mpu_data_t Fs, size_t steps, long d
 		S->phi	 += ((T/2.L)*(dot_phi_euler	+ S->dot_phi	));
 		S->theta += ((T/2.L)*(dot_theta_euler	+ S->dot_theta	));
 		S->psi	 += ((T/2.L)*(dot_psi_euler	+ S->dot_psi	));
+		S->psi	 = fmodl(S->phi, M_PI);
+		S->psi	 = fmodl(S->theta, (M_PI/2.L));
 		S->psi	 = fmodl(S->psi, M_PI);
-		long double an =   S->fx * cos(S->psi) * cos(S->theta) \
-				 + S->fy * (-sin(S->phi) * sin(S->theta) * cos(S->psi) + sin(S->psi) * cos(S->phi)) \
-				 + S->fz * (-sin(S->phi) * sin(S->psi) - sin(S->theta) * cos(S->phi) * cos(S->psi)) ;
-		long double ae =   S->fx * sin(S->psi) * cos(S->theta) \
-				 + S->fy * (-sin(S->phi) * sin(S->psi) * sin(S->theta) - cos(S->phi) * cos(S->psi)) \
-			         + S->fz * ( sin(S->phi) * cos(S->psi) - sin(S->psi) * sin(S->theta) * cos(S->phi)) ;
-		long double ad = - S->fz * sin(S->theta) \
+		S->an =   S->fx * cos(S->psi) * cos(S->theta) \
+			+ S->fy * (-sin(S->phi) * sin(S->theta) * cos(S->psi) + sin(S->psi) * cos(S->phi)) \
+			+ S->fz * (-sin(S->phi) * sin(S->psi) - sin(S->theta) * cos(S->phi) * cos(S->psi)) ;
+		S->ae =   S->fx * sin(S->psi) * cos(S->theta) \
+			+ S->fy * (-sin(S->phi) * sin(S->psi) * sin(S->theta) - cos(S->phi) * cos(S->psi)) \
+			+ S->fz * ( sin(S->phi) * cos(S->psi) - sin(S->psi) * sin(S->theta) * cos(S->phi)) ;
+		S->au = - S->fx * sin(S->theta) \
 				 - S->fy * sin(S->phi) * cos(S->theta) \
 				 - S->fz * cos(S->phi) * cos(S->theta) - gforce;
-		S->vn += ( an * T);
-		S->ve += ( ae * T);
-		S->vu += ( ad * T);
+		S->vn += ( S->an * T);
+		S->ve += ( S->ae * T);
+		S->vu += ( S->au * T);
 		S->pn += S->vn * T;
 		S->pe += S->ve * T;
 		S->pu += S->vu * T;
@@ -104,26 +106,33 @@ void snprint_state(state_t *S, char *msg, char *buf)
 	//sprintf(buf, "dph:%+.2Lf ",	r2d(S->dot_phi));	strcat(msg, buf);
 	//sprintf(buf, "dth:%+.2Lf ",	r2d(S->dot_theta));	strcat(msg, buf);
 	//sprintf(buf, "dps:%+.2Lf ",	r2d(S->dot_psi));	strcat(msg, buf);
-	
-	sprintf(buf, "phi:%+.2Lf ",	r2d(S->phi));	strcat(msg, buf);
-	sprintf(buf, "the:%+.2Lf ",	r2d(S->theta));	strcat(msg, buf);
-	sprintf(buf, "psi:%+.2Lf ",	r2d(S->psi));	strcat(msg, buf);
-
-	sprintf(buf, "fx:%+.5Lf ",	S->fx);	strcat(msg, buf);
-	sprintf(buf, "fy:%+.5Lf ",	S->fy); strcat(msg, buf);
-	sprintf(buf, "fz:%+.5Lf ",	S->fz); strcat(msg, buf);
-
-	sprintf(buf, "vn:%+.5Lf ",	S->vn);	strcat(msg, buf);
-	sprintf(buf, "ve:%+.5Lf ", 	S->ve);	strcat(msg, buf);
-	sprintf(buf, "vu:%+.5Lf ", 	S->vu);	strcat(msg, buf);
-
-	/* attitude, position */
-	sprintf(buf, "pn:%+.5Lf ",	S->pn);	strcat(msg, buf);
-	sprintf(buf, "pe:%+.5Lf ",	S->pe);	strcat(msg, buf);
-	sprintf(buf, "pu:%+.5Lf ",	S->pu);	strcat(msg, buf);
-
 	//sprintf(buf, "P:%+.2Lf ",	S->P);	strcat(msg, buf);
 	//sprintf(buf, "Q:%+.2Lf ",	S->Q);	strcat(msg, buf);
 	//sprintf(buf, "R:%+.2Lf ",	S->R);	strcat(msg, buf);
+	sprintf(buf, "phi:%+.2Lf ",	r2d(S->phi));	strcat(msg, buf);
+	sprintf(buf, "the:%+.2Lf ",	r2d(S->theta));	strcat(msg, buf);
+	sprintf(buf, "psi:%+.2Lf ",	r2d(S->psi));	strcat(msg, buf);
+	//sprintf(buf, "vn:%+.3Lf ",	S->vn);	strcat(msg, buf);
+	//sprintf(buf, "ve:%+.3Lf ", 	S->ve);	strcat(msg, buf);
+	//sprintf(buf, "vu:%+.3Lf ", 	S->vu);	strcat(msg, buf);
+	sprintf(buf, "pn:%+.3Lf ",	S->pn);	strcat(msg, buf);
+	sprintf(buf, "pe:%+.3Lf ",	S->pe);	strcat(msg, buf);
+	sprintf(buf, "pu:%+.3Lf ",	S->pu);	strcat(msg, buf);
+	//sprintf(buf, "fx:%+.5Lf ",	S->fx);	strcat(msg, buf);
+	//sprintf(buf, "fy:%+.5Lf ",	S->fy); strcat(msg, buf);
+	//sprintf(buf, "fz:%+.5Lf ",	S->fz); strcat(msg, buf);
+	//sprintf(buf, "an:%+.5Lf ",	S->an);	strcat(msg, buf);
+	//sprintf(buf, "ae:%+.5Lf ",	S->ae);	strcat(msg, buf);
+	//sprintf(buf, "au:%+.5Lf ",	S->au);	strcat(msg, buf);
+
 }
 
+void imu_get_data(imu_t *imu,struct mpu_dev *dev)
+{
+		imu->dat.Gx= d2r(*(dev->Gx));
+		imu->dat.Gy= d2r(*(dev->Gy));
+		imu->dat.Gz= d2r(*(dev->Gz));
+		imu->dat.Ax= imu->gforce * *(dev->Ax);
+		imu->dat.Ay= imu->gforce * *(dev->Ay);
+		imu->dat.Az= imu->gforce * *(dev->Az);
+}

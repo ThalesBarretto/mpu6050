@@ -8,6 +8,7 @@
 
 #include <libmpu6050/mpu6050_core.h>
 #include <tgmath.h>
+#include "filter.h"
 
 #define MAXLINE 1024ul
 #define MAXNAME 32ul
@@ -160,6 +161,9 @@ typedef struct state_t {
 	data_t  ve;		/* p_dot[1]			*/
 	data_t  vu;		/* p_dot[2]			*/
 	/* vector u = { fxyz omega } -------------------------- */
+	data_t  an;		/* p_ddot[0]			*/
+	data_t  ae;		/* p_ddot[1]			*/
+	data_t  au;		/* p_ddot[2]			*/
 	data_t  fx;	/* f[0]					*/
 	data_t  fy;	/* f[1]					*/
 	data_t  fz;	/* f[2]					*/
@@ -205,6 +209,9 @@ series_t* series_new(size_t many);
 void record_push(series_t *Series, record_t *Record);
 void state_integrate_trapezoidal(state_t *S, mpu_data_t Fs, size_t steps, long double gforce);
 void series_integrate_last(series_t *S);
+void imu_get_data(imu_t *imu,struct mpu_dev *dev);
+void series_get_last(series_t *Series, struct mpu_flt_dat *flt);
+void series_destroy(series_t *Series);
 #endif /* _STATE_H_ */
 #ifdef __cplusplus
 	}

@@ -110,26 +110,14 @@ int main(int argc, char *argv[])
 	char *msg = calloc(1, sizeof(char)*MPU_MAXLINE);
 	char *buf = calloc(1, sizeof(char)*MPU_MAXLINE);
 
-	for( size_t i = 0 ;dev->samples < Series->size;) {
+	while(dev->samples <= Series->size) {
 		mpu_get_data(dev);
-		Imu.dat.Gx= d2r(*(dev->Gx));
-		Imu.dat.Gy= d2r(*(dev->Gy));
-		Imu.dat.Gz= d2r(*(dev->Gz));
-		Imu.dat.Ax= Imu.gforce * *(dev->Ax);
-		Imu.dat.Ay= Imu.gforce * *(dev->Ay);
-		Imu.dat.Az= Imu.gforce * *(dev->Az);
+		imu_get_data(&Imu,dev);
 		filter_update(flt);
-		Series->last->X.phi	= d2r(flt->anf->ean[0]);
-		Series->last->X.theta	= d2r(flt->anf->ean[1]);
-		Series->last->X.psi	= d2r(flt->anf->ean[2]);
-		Series->last->X.P	= Series->imu->dat.Gx;
-		Series->last->X.Q	= Series->imu->dat.Gy;
-		Series->last->X.R	= Series->imu->dat.Gz;
-		Series->last->X.fx	= Series->imu->dat.Ax;
-		Series->last->X.fy	= Series->imu->dat.Ay;
-		Series->last->X.fz	= Series->imu->dat.Az;
+		series_get_last(Series, flt);
 		series_integrate_last(Series);
 		sprintf(buf, "%5zu " , Series->last->count); strcat(msg, buf);
+		//snprint_data(dev, msg, buf);
 		snprint_state(&Series->last->X, msg, buf);
 		strcat(msg,"\n");
 
@@ -141,10 +129,11 @@ int main(int argc, char *argv[])
 
 		sprintf(msg,"%s", "");
 
-		record_push(Series, Series->first + i);
+		record_push(Series, Series->first + dev->samples);
 	}
 	filter_destroy(flt);
 	mpu_destroy(dev);
+	series_destroy(Series);
 	free(msg);
 	free(buf);
 	return 0;

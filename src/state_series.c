@@ -2,6 +2,7 @@
 #include "state_math.h"
 #include "stdlib.h"
 #include "stdio.h"
+#include "filter.h"
 #include <tgmath.h>
 
 state_t* state_new(size_t many)
@@ -127,6 +128,7 @@ void series_init(series_t *Series,
 		const integration_t * Integration,
 		size_t Size)
 {
+	size_t padding = 8;
 	Series->first = NULL;
 	Series->last = NULL;
 	Series->pos = NULL;
@@ -135,7 +137,7 @@ void series_init(series_t *Series,
 	Series->integ = *Integration;
 	snprintf(Series->description, MAXLINE, "%s", Description);
 	/* create an array of records in the heap */
-	Series->first = record_new(Size);
+	Series->first = record_new(Size + padding);
 	Series->last = Series->first;
 }
 
@@ -210,6 +212,19 @@ data_t vec3_magnitude(vec3_t A)
 data_t vec3_prod_dot(vec3_t A, vec3_t B, data_t angle)
 {
 	return vec3_magnitude(A) * vec3_magnitude(B) * cos(angle);
+}
+
+void series_get_last(series_t *Series, struct mpu_flt_dat *flt)
+{
+		Series->last->X.phi	= d2r(flt->anf->ean[0]);
+		Series->last->X.theta	= d2r(flt->anf->ean[1]);
+		Series->last->X.psi	= d2r(flt->anf->ean[2]);
+		Series->last->X.P	= Series->imu->dat.Gx;
+		Series->last->X.Q	= Series->imu->dat.Gy;
+		Series->last->X.R	= Series->imu->dat.Gz;
+		Series->last->X.fx	= Series->imu->dat.Ax;
+		Series->last->X.fy	= Series->imu->dat.Ay;
+		Series->last->X.fz	= Series->imu->dat.Az;
 }
 
 ///* CROSS product */
