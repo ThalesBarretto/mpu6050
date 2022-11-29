@@ -1,8 +1,3 @@
-[submodule "mod/libmtx"]
-	active = true
-	path = mod/libmtx
-	url = https://github.com/ThalesBarretto/libmtx.git
-	branch = master
 [submodule "mod/libmpu6050"]
 	active = true
 	path = mod/libmpu6050
